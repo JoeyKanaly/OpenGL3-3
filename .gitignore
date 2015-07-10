@@ -23,7 +23,7 @@ bld/
 [Oo]bj/
 !OpenGL3-3/lib/Release
 !OpenGL3-3/lib/Release/x64
-
+!OpenGL3-3/lib/Release MX/x64
 
 # Visual Studo 2015 cache/options directory
 .vs/
