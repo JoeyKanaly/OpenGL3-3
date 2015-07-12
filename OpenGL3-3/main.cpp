@@ -52,6 +52,13 @@ int main()
 		return -1;
 	}
 
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+	
+	//For when you want to clamp to the border
+	//float borderColor[] = { 1.0f, 1.0f, 0.0f, 1.0f};
+	//glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+	
 	glViewport(0, 0, 800, 600);
 
 	GLuint VBO;
@@ -64,10 +71,10 @@ int main()
 	glGenBuffers(1, &EBO);
 
 	GLfloat verts[] = {
-		 0.5f,  0.5f, 0.0f, 0.0f, 1.0f, 0.6f,
-		 0.5f, -0.5f, 0.0f, 0.2f, 0.9f, 0.1f,
-		-0.5f, -0.5f, 0.0f, 0.1f, 0.2f, 0.3f,
-		-0.5f,  0.5f, 0.0f, 0.4f, 0.5f, 0.6f
+		 0.5f,  0.5f, 0.0f, 1.0f, 1.0f,
+		 0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
+		-0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
+		-0.5f,  0.5f, 0.0f, 0.0f, 1.0f
 	};
 	
 	GLuint indicies[] = {
@@ -75,16 +82,16 @@ int main()
 		1, 2, 3
 	};
 
-	program = compileShaders(".\\shaders\\tut3.vert.glsl", ".\\shaders\\tut3.frag.glsl");
+	program = compileShaders(".\\shaders\\tut4.vert.glsl", ".\\shaders\\tut4.frag.glsl");
 
 	glBindVertexArray(VAO);
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indicies), indicies, GL_STATIC_DRAW);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)0);
 		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
 		glEnableVertexAttribArray(1);
 	glBindVertexArray(0);
 	
