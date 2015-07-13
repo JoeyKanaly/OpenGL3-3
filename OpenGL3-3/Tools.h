@@ -6,6 +6,44 @@
 #include <string>
 #include <GL\glew.h>
 #include <GLFW\glfw3.h>
+#include <SOIL\SOIL.h>
+
+struct SImage
+{
+	int width;
+	int height;
+	unsigned char* img;
+};
+
+GLuint loadTexture(const char* imagePath)
+{
+	SImage image;
+	image.img = SOIL_load_image(imagePath, &image.width, &image.height, 0, SOIL_LOAD_RGB);
+	if (image.img == '\0')
+	{
+		std::cout << "Unable to load image at location: " << imagePath << std::endl;
+	}
+	GLuint texture;
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	//For when you want to clamp to the border
+	//float borderColor[] = { 1.0f, 1.0f, 0.0f, 1.0f};
+	//glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.width, image.height, 0, GL_RGB, GL_UNSIGNED_BYTE, image.img);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	SOIL_free_image_data(image.img);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	return texture;
+}
 
 GLuint compileShaders(std::string vertex, std::string fragment)
 {
