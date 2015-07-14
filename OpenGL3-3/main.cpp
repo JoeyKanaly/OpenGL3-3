@@ -1,22 +1,19 @@
 #define GLEW_STATIC
 #include <iostream>
+#include <algorithm>
 #include <GL\glew.h>
 #include <GLFW\glfw3.h>
-#include "Tools.h"
 #include <SOIL\SOIL.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include "Tools.h"
 
 GLFWwindow* window;
 GLuint program;
-
-const std::string vertexShader = ".\\shaders\\tut4.vert.glsl";
-const std::string fragmeShader = ".\\shaders\\tut4.frag.glsl";
-
-struct Simage
-{
-	int width;
-	int height;
-	unsigned char* img;
-};
+glm::mat4 view;
+const std::string vertexShader = ".\\shaders\\tut6.vert.glsl";
+const std::string fragmeShader = ".\\shaders\\tut6.frag.glsl";
 
 void keyboard(GLFWwindow* window, int key, int scancode, int action, int mode)
 {
@@ -26,6 +23,8 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mode)
 		program = compileShaders(vertexShader, fragmeShader);
 	if (key == GLFW_KEY_C && action == GLFW_PRESS)
 			system("cls");
+	if (key == GLFW_KEY_T && action == GLFW_PRESS)
+		std::cout << "Current GLFW time: " << glfwGetTime() << std::endl;
 }
 
 int initWindow()
@@ -63,9 +62,10 @@ int main()
 	{
 		return -1;
 	}
-		
-	glViewport(0, 0, 800, 600);
-
+	glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
+	int width = 800, height = 600;
+	glViewport(0, 0, width, height);
+	glEnable(GL_DEPTH_TEST);
 	GLuint VBO;
 	glGenBuffers(1, &VBO);
 
@@ -76,11 +76,47 @@ int main()
 	glGenBuffers(1, &EBO);
 
 	GLfloat verts[] = {
-		// Positions		  Colors			  Texture Coords
-		 0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,  // Top Right
-		 0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,  // Bottom Right
-		-0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,  // Bottom Left
-		-0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f   // Top Left
+		-0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
+		0.5f, -0.5f, -0.5f, 1.0f, 0.0f,
+		0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+		0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+		-0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
+		-0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
+
+		-0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+		0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
+		0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
+		0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
+		-0.5f, 0.5f, 0.5f, 0.0f, 1.0f,
+		-0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+
+		-0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+		-0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+		-0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+		-0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+		-0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+		-0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+
+		0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+		0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+		0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+		0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+		0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+		0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+
+		-0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+		0.5f, -0.5f, -0.5f, 1.0f, 1.0f,
+		0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
+		0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
+		-0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+		-0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+
+		-0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
+		0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+		0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+		0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+		-0.5f, 0.5f, 0.5f, 0.0f, 0.0f,
+		-0.5f, 0.5f, -0.5f, 0.0f, 1.0f
 	};
 	
 	GLuint indicies[] = {
@@ -88,6 +124,20 @@ int main()
 		1, 2, 3
 	};
 
+	glm::vec3 cubePositions[] = {
+		glm::vec3(0.0f, 0.0f, 0.0f),
+		glm::vec3(2.0f, 5.0f, -15.0f),
+		glm::vec3(-1.5f, -2.2f, -2.5f),
+		glm::vec3(-3.8f, -2.0f, -12.3f),
+		glm::vec3(2.4f, -0.4f, -3.5f),
+		glm::vec3(-1.7f, 3.0f, -7.5f),
+		glm::vec3(1.3f, -2.0f, -2.5f),
+		glm::vec3(1.5f, 2.0f, -2.5f),
+		glm::vec3(1.5f, 0.2f, -1.5f),
+		glm::vec3(-1.3f, 1.0f, -1.5f)
+	};
+	
+	glm::mat4 trans;
 	GLuint texture1 = loadTexture("images/container.jpg");
 	GLuint texture2 = loadTexture("images/awesomeface.png");
 
@@ -98,40 +148,70 @@ int main()
 		glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indicies), indicies, GL_STATIC_DRAW);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)0);
 		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
 		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(6 * sizeof(GLfloat)));
-		glEnableVertexAttribArray(2);
 	glBindVertexArray(0);
 	
-	//GLint nrAttributes;
-	//glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &nrAttributes);
-	//std::cout << "Maximum nr of vertex attributes supported: " << nrAttributes << std::endl;
 	//Wire frame mode
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	
+	//glm::mat4
+	glm::mat4 proj;
+	proj = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 100.0f);
+	//proj = glm::ortho(0.0f, (float)width, 0.0f, (float)height, 0.1f, 100.0f);
+	
+	view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+	glm::mat4 model;
+	model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
-	GLuint ourTexture = glGetUniformLocation(program, "ourTexture");
+
 	GLuint time = glGetUniformLocation(program, "time");
+	GLuint transLocation = glGetUniformLocation(program, "trans");
+	GLuint modelUni = glGetUniformLocation(program, "model");
+	GLuint viewUni = glGetUniformLocation(program, "view");
+	GLuint projUni = glGetUniformLocation(program, "projection");
+
 	while (!glfwWindowShouldClose(window))
 	{
 		glfwPollEvents();
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
-
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		model = glm::mat4();
+		model = glm::rotate(model, (GLfloat)glfwGetTime() * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));
+		
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture1);
 		glUniform1i(glGetUniformLocation(program, "myTexture1"), 0);
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, texture2);
 		glUniform1i(glGetUniformLocation(program, "myTexture2"), 1);
-		
 		glUseProgram(program);
-		//glUniform1i(ourTexture, texture);
+		glUniformMatrix4fv(transLocation, 1, GL_FALSE, glm::value_ptr(trans));
+		glUniformMatrix4fv(modelUni, 1, GL_FALSE, glm::value_ptr(model));
+		glUniformMatrix4fv(viewUni, 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(projUni, 1, GL_FALSE, glm::value_ptr(proj));
 		glUniform1f(time, glfwGetTime());
 		glBindVertexArray(VAO);
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+		for (GLuint i = 0; i < 10; i++)
+		{
+			model = glm::mat4();
+			model = glm::translate(model, cubePositions[i]);
+			GLfloat angle = 20.0f * i;
+			model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+			if (i % 2 == 0)
+				model = glm::rotate(model, (GLfloat)glfwGetTime() * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));
+			if (i % 3 == 0 && i!= 0)
+				model = glm::translate(model, glm::vec3(0.0f, (GLfloat)sin(glfwGetTime())/3, 0.0f));
+			glUniformMatrix4fv(modelUni, 1, GL_FALSE, glm::value_ptr(model));
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+		}
+		/*
+		//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+		*/
 		glBindVertexArray(0);
 		glBindTexture(GL_TEXTURE_2D, 0);
 
