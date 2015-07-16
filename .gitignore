@@ -21,12 +21,9 @@ build/
 bld/
 [Bb]in/
 [Oo]bj/
-!vs2012/OpenGL3-3/lib/Release
-!vs2012/OpenGL3-3/lib/Release/x64
-!vs2012/OpenGL3-3/lib/Release MX/x64
-!vs2013/OpenGL3-3/lib/Release
-!vs2013/OpenGL3-3/lib/Release/x64
-!vs2013/OpenGL3-3/lib/Release MX/x64
+!vs201[23]/OpenGL3-3/lib/Release
+!vs201[23]/OpenGL3-3/lib/Release/x64
+!vs201[23]/OpenGL3-3/lib/Release MX/x64
 # Visual Studo 2015 cache/options directory
 .vs/
 
