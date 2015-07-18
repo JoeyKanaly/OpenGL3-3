@@ -4,9 +4,9 @@
 #include <GL\glew.h>
 #include <GLFW\glfw3.h>
 #include <SOIL\SOIL.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
+#include <glm\glm.hpp>
+#include <glm\gtc\matrix_transform.hpp>
+#include <glm\gtc\type_ptr.hpp>
 #include "Tools.h"
 
 GLFWwindow* window;
@@ -14,6 +14,10 @@ GLuint program;
 glm::mat4 view;
 const std::string vertexShader = ".\\shaders\\tut6.vert.glsl";
 const std::string fragmeShader = ".\\shaders\\tut6.frag.glsl";
+
+glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
 void keyboard(GLFWwindow* window, int key, int scancode, int action, int mode)
 {
@@ -25,6 +29,22 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mode)
 			system("cls");
 	if (key == GLFW_KEY_T && action == GLFW_PRESS)
 		std::cout << "Current GLFW time: " << glfwGetTime() << std::endl;
+
+	GLfloat cameraSpeed = 0.05f;
+	if (key == GLFW_KEY_W)
+		cameraPos += cameraSpeed * cameraFront;
+	if (key == GLFW_KEY_S)
+		cameraPos -= cameraSpeed * cameraFront;
+	if (key == GLFW_KEY_A)
+		cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+	if (key == GLFW_KEY_D)
+		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+	{
+
+	}
+	{
+
+	}
 }
 
 int initWindow()
@@ -62,6 +82,9 @@ int main()
 	{
 		return -1;
 	}
+
+
+
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
 	int width = 800, height = 600;
 	glViewport(0, 0, width, height);
@@ -161,7 +184,7 @@ int main()
 	glm::mat4 proj;
 	proj = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 100.0f);
 	//proj = glm::ortho(0.0f, (float)width, 0.0f, (float)height, 0.1f, 100.0f);
-	
+
 	view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
 	glm::mat4 model;
 	model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
@@ -180,7 +203,11 @@ int main()
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		model = glm::mat4();
 		model = glm::rotate(model, (GLfloat)glfwGetTime() * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));
-		
+		GLfloat radius = 20.0f;
+		GLfloat camX = sin(glfwGetTime()) * radius;
+		GLfloat camZ = cos(glfwGetTime()) * radius;
+
+		glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture1);
 		glUniform1i(glGetUniformLocation(program, "myTexture1"), 0);
