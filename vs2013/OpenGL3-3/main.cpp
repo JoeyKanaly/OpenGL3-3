@@ -14,13 +14,38 @@ GLuint program;
 glm::mat4 view;
 const std::string vertexShader = ".\\shaders\\tut6.vert.glsl";
 const std::string fragmeShader = ".\\shaders\\tut6.frag.glsl";
+bool keys[1024];
 
 glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
+glm::vec3 direction;
+glm::vec2 lastPosition = glm::vec2(400.0f, 300.0f);
+
+GLfloat pitch;
+GLfloat yaw;
+bool firstMouse = true;
+void updateCamera()
+{
+	GLfloat cameraSpeed = 0.05f;
+	if (keys[GLFW_KEY_W])
+		cameraPos += cameraSpeed * cameraFront;
+	if (keys[GLFW_KEY_S])
+		cameraPos -= cameraSpeed * cameraFront;
+	if (keys[GLFW_KEY_A])
+		cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+	if (keys[GLFW_KEY_D])
+		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+
+}
+
 void keyboard(GLFWwindow* window, int key, int scancode, int action, int mode)
 {
+	if (action == GLFW_PRESS)
+		keys[key] = true;
+	else if (action == GLFW_RELEASE)
+		keys[key] = false;
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, GL_TRUE);
 	if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
@@ -31,20 +56,46 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mode)
 		std::cout << "Current GLFW time: " << glfwGetTime() << std::endl;
 
 	GLfloat cameraSpeed = 0.05f;
-	if (key == GLFW_KEY_W)
+	/*if (key == GLFW_KEY_W)
 		cameraPos += cameraSpeed * cameraFront;
 	if (key == GLFW_KEY_S)
 		cameraPos -= cameraSpeed * cameraFront;
 	if (key == GLFW_KEY_A)
 		cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
 	if (key == GLFW_KEY_D)
-		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-	{
+		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;*/
+}
 
-	}
+void mouse(GLFWwindow* window, double xpos, double ypos)
+{
+	
+	if (firstMouse)
 	{
-
+		lastPosition.x = xpos;
+		lastPosition.y = ypos;
+		firstMouse = false;
 	}
+	
+	glm::vec2 offset;
+	offset.x = xpos - lastPosition.x;
+	offset.y = lastPosition.y - ypos;
+	lastPosition.x = xpos;
+	lastPosition.y = ypos;
+
+	GLfloat sensitivity = 0.05f;
+	offset.x *= sensitivity;
+	offset.y *= sensitivity;
+	yaw += offset.x;
+	pitch += offset.y;
+	if (pitch > 89.0f)
+		pitch = 89.0f;
+	else if (pitch < -89.0f)
+		pitch = -89.0f;
+	glm::vec3 front;
+	front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+	front.y = sin(glm::radians(pitch));
+	front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+	cameraFront = glm::normalize(front);
 }
 
 int initWindow()
@@ -55,7 +106,6 @@ int initWindow()
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
-
 	window = glfwCreateWindow(800, 600, "Learn OpenGL", nullptr, nullptr);
 	if (window == nullptr)
 	{
@@ -64,8 +114,10 @@ int initWindow()
 		return -1;
 	}
 	glfwMakeContextCurrent(window);
-	
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetWindowPos(window, 500, 100);
 	glfwSetKeyCallback(window, keyboard);
+	glfwSetCursorPosCallback(window, mouse);
 
 	glewExperimental = GL_TRUE;
 	if (glewInit() != GLEW_OK)
@@ -83,7 +135,8 @@ int main()
 		return -1;
 	}
 
-
+	glm::vec3 front;
+	
 
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
 	int width = 800, height = 600;
@@ -199,14 +252,16 @@ int main()
 	while (!glfwWindowShouldClose(window))
 	{
 		glfwPollEvents();
+		updateCamera();
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		model = glm::mat4();
 		model = glm::rotate(model, (GLfloat)glfwGetTime() * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));
-		GLfloat radius = 20.0f;
+		GLfloat radius = 50.0f;
 		GLfloat camX = sin(glfwGetTime()) * radius;
 		GLfloat camZ = cos(glfwGetTime()) * radius;
 
+		//glm::mat4 view = glm::lookAt(glm::vec3(camX, 0.0, camZ), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 		glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture1);
