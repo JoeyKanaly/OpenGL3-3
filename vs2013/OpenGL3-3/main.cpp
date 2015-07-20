@@ -8,6 +8,7 @@
 #include <glm\gtc\matrix_transform.hpp>
 #include <glm\gtc\type_ptr.hpp>
 #include "Tools.h"
+#include "Camera.hpp"
 
 GLFWwindow* window;
 GLuint program;
@@ -22,22 +23,25 @@ glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
 glm::vec3 direction;
 glm::vec2 lastPosition = glm::vec2(400.0f, 300.0f);
-
+Camera cam;
 GLfloat pitch;
 GLfloat yaw;
 bool firstMouse = true;
+
+GLfloat deltaTime = 0.0f;
+GLfloat lastFrame = 0.0f;
+
 void updateCamera()
 {
 	GLfloat cameraSpeed = 0.05f;
 	if (keys[GLFW_KEY_W])
-		cameraPos += cameraSpeed * cameraFront;
+		cam.ProcessKeyboard(FORWARD, deltaTime);
 	if (keys[GLFW_KEY_S])
-		cameraPos -= cameraSpeed * cameraFront;
+		cam.ProcessKeyboard(BACKWARD, deltaTime);
 	if (keys[GLFW_KEY_A])
-		cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+		cam.ProcessKeyboard(LEFT, deltaTime);
 	if (keys[GLFW_KEY_D])
-		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-
+		cam.ProcessKeyboard(RIGHT, deltaTime);
 }
 
 void keyboard(GLFWwindow* window, int key, int scancode, int action, int mode)
@@ -54,16 +58,6 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mode)
 			system("cls");
 	if (key == GLFW_KEY_T && action == GLFW_PRESS)
 		std::cout << "Current GLFW time: " << glfwGetTime() << std::endl;
-
-	GLfloat cameraSpeed = 0.05f;
-	/*if (key == GLFW_KEY_W)
-		cameraPos += cameraSpeed * cameraFront;
-	if (key == GLFW_KEY_S)
-		cameraPos -= cameraSpeed * cameraFront;
-	if (key == GLFW_KEY_A)
-		cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-	if (key == GLFW_KEY_D)
-		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;*/
 }
 
 void mouse(GLFWwindow* window, double xpos, double ypos)
@@ -81,21 +75,36 @@ void mouse(GLFWwindow* window, double xpos, double ypos)
 	offset.y = lastPosition.y - ypos;
 	lastPosition.x = xpos;
 	lastPosition.y = ypos;
+	cam.ProcessMouseMovement(offset.x, offset.y);
+	//GLfloat sensitivity = 0.05f;
+	//offset.x *= sensitivity;
+	//offset.y *= sensitivity;
+	//yaw += offset.x;
+	//pitch += offset.y;
+	//if (pitch > 89.0f)
+	//	pitch = 89.0f;
+	//else if (pitch < -89.0f)
+	//	pitch = -89.0f;
+	//glm::vec3 front;
+	//front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+	//front.y = sin(glm::radians(pitch));
+	//front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+	//cameraFront = glm::normalize(front);
+}
 
-	GLfloat sensitivity = 0.05f;
-	offset.x *= sensitivity;
-	offset.y *= sensitivity;
-	yaw += offset.x;
-	pitch += offset.y;
-	if (pitch > 89.0f)
-		pitch = 89.0f;
-	else if (pitch < -89.0f)
-		pitch = -89.0f;
-	glm::vec3 front;
-	front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-	front.y = sin(glm::radians(pitch));
-	front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-	cameraFront = glm::normalize(front);
+void mouseButtons(GLFWwindow* window, int button, int action, int mods)
+{
+	if (button == GLFW_MOUSE_BUTTON_RIGHT)
+		if (action == GLFW_PRESS)
+			cam.Zoom = 20;
+		else
+			cam.Zoom = 45;
+}
+
+void scroll(GLFWwindow* window, double xOff, double yOff)
+{
+	cam.ProcessMouseScroll(yOff*10);
+	std::cout << yOff  << ", " << cam.Zoom << std::endl;
 }
 
 int initWindow()
@@ -118,6 +127,8 @@ int initWindow()
 	glfwSetWindowPos(window, 500, 100);
 	glfwSetKeyCallback(window, keyboard);
 	glfwSetCursorPosCallback(window, mouse);
+	glfwSetMouseButtonCallback(window, mouseButtons);
+	glfwSetScrollCallback(window, scroll);
 
 	glewExperimental = GL_TRUE;
 	if (glewInit() != GLEW_OK)
@@ -126,6 +137,11 @@ int initWindow()
 		return -1;
 	}
 	return 0;
+}
+
+void initGame()
+{
+	cam = Camera(cameraPos, cameraUp);
 }
 
 int main()
@@ -137,7 +153,7 @@ int main()
 
 	glm::vec3 front;
 	
-
+	initGame();
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
 	int width = 800, height = 600;
 	glViewport(0, 0, width, height);
@@ -252,6 +268,9 @@ int main()
 	while (!glfwWindowShouldClose(window))
 	{
 		glfwPollEvents();
+		GLfloat currentFrame = glfwGetTime();
+		deltaTime = currentFrame - lastFrame;
+		lastFrame = currentFrame;
 		updateCamera();
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -262,7 +281,8 @@ int main()
 		GLfloat camZ = cos(glfwGetTime()) * radius;
 
 		//glm::mat4 view = glm::lookAt(glm::vec3(camX, 0.0, camZ), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+		proj = glm::perspective(glm::radians(cam.Zoom), (GLfloat)width / (GLfloat)height, 0.1f, 100.0f);
+		glm::mat4 view = cam.GetViewMatrix();//glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture1);
 		glUniform1i(glGetUniformLocation(program, "myTexture1"), 0);
