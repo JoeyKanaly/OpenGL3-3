@@ -7,8 +7,8 @@
 #include <glm\glm.hpp>
 #include <glm\gtc\matrix_transform.hpp>
 #include <glm\gtc\type_ptr.hpp>
-#include "Tools.h"
-#include "Camera.hpp"
+#include <Tools.h>
+#include <Camera.hpp>
 
 GLFWwindow* window;
 GLuint program;
@@ -131,11 +131,8 @@ int main()
 	{
 		return -1;
 	}
-
-	glm::vec3 front;
 	
 	initGame();
-	glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
 	int width = 800, height = 600;
 	glViewport(0, 0, width, height);
 	glEnable(GL_DEPTH_TEST);
@@ -148,6 +145,7 @@ int main()
 	GLuint EBO;
 	glGenBuffers(1, &EBO);
 
+#pragma region Verts
 	GLfloat verts[] = {
 		-0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
 		0.5f, -0.5f, -0.5f, 1.0f, 0.0f,
@@ -191,7 +189,8 @@ int main()
 		-0.5f, 0.5f, 0.5f, 0.0f, 0.0f,
 		-0.5f, 0.5f, -0.5f, 0.0f, 1.0f
 	};
-	
+#pragma endregion
+
 	GLuint indicies[] = {
 		0, 1, 3,
 		1, 2, 3
@@ -273,13 +272,14 @@ int main()
 		glBindTexture(GL_TEXTURE_2D, texture2);
 		glUniform1i(glGetUniformLocation(program, "myTexture2"), 1);
 
-		glUseProgram(program);
 
 		glUniformMatrix4fv(transLocation, 1, GL_FALSE, glm::value_ptr(trans));
 		glUniformMatrix4fv(modelUni, 1, GL_FALSE, glm::value_ptr(model));
 		glUniformMatrix4fv(viewUni, 1, GL_FALSE, glm::value_ptr(view));
 		glUniformMatrix4fv(projUni, 1, GL_FALSE, glm::value_ptr(proj));
 		glUniform1f(time, glfwGetTime());
+
+		glUseProgram(program);
 		glBindVertexArray(VAO);
 		
 		for (GLuint i = 0; i < 10; i++)
