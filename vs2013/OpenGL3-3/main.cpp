@@ -17,23 +17,18 @@ const std::string vertexShader = ".\\shaders\\tut6.vert.glsl";
 const std::string fragmeShader = ".\\shaders\\tut6.frag.glsl";
 bool keys[1024];
 
-glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
-glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-
-glm::vec3 direction;
 glm::vec2 lastPosition = glm::vec2(400.0f, 300.0f);
 Camera cam;
-GLfloat pitch;
-GLfloat yaw;
+
 bool firstMouse = true;
 
 GLfloat deltaTime = 0.0f;
 GLfloat lastFrame = 0.0f;
 
-void updateCamera()
+glm::mat4 proj;
+
+void updateCameraMovement()
 {
-	GLfloat cameraSpeed = 0.05f;
 	if (keys[GLFW_KEY_W])
 		cam.ProcessKeyboard(FORWARD, deltaTime);
 	if (keys[GLFW_KEY_S])
@@ -76,20 +71,6 @@ void mouse(GLFWwindow* window, double xpos, double ypos)
 	lastPosition.x = xpos;
 	lastPosition.y = ypos;
 	cam.ProcessMouseMovement(offset.x, offset.y);
-	//GLfloat sensitivity = 0.05f;
-	//offset.x *= sensitivity;
-	//offset.y *= sensitivity;
-	//yaw += offset.x;
-	//pitch += offset.y;
-	//if (pitch > 89.0f)
-	//	pitch = 89.0f;
-	//else if (pitch < -89.0f)
-	//	pitch = -89.0f;
-	//glm::vec3 front;
-	//front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-	//front.y = sin(glm::radians(pitch));
-	//front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-	//cameraFront = glm::normalize(front);
 }
 
 void mouseButtons(GLFWwindow* window, int button, int action, int mods)
@@ -141,7 +122,7 @@ int initWindow()
 
 void initGame()
 {
-	cam = Camera(cameraPos, cameraUp);
+	cam = Camera(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 }
 
 int main()
@@ -248,6 +229,12 @@ int main()
 	
 	//Wire frame mode
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+	//Colors
+	glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
+	glm::vec3 toyColor(1.0f, 0.5f, 0.31f);
+	glm::vec3 result = lightColor * toyColor;
+
 	
 	//glm::mat4
 	glm::mat4 proj;
@@ -256,7 +243,7 @@ int main()
 
 	view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
 	glm::mat4 model;
-	model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	//model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
 
 	GLuint time = glGetUniformLocation(program, "time");
@@ -271,32 +258,30 @@ int main()
 		GLfloat currentFrame = glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
-		updateCamera();
+		updateCameraMovement();
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		model = glm::mat4();
-		model = glm::rotate(model, (GLfloat)glfwGetTime() * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));
-		GLfloat radius = 50.0f;
-		GLfloat camX = sin(glfwGetTime()) * radius;
-		GLfloat camZ = cos(glfwGetTime()) * radius;
 
-		//glm::mat4 view = glm::lookAt(glm::vec3(camX, 0.0, camZ), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 		proj = glm::perspective(glm::radians(cam.Zoom), (GLfloat)width / (GLfloat)height, 0.1f, 100.0f);
-		glm::mat4 view = cam.GetViewMatrix();//glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+		glm::mat4 view = cam.GetViewMatrix();
+
+
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture1);
 		glUniform1i(glGetUniformLocation(program, "myTexture1"), 0);
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, texture2);
 		glUniform1i(glGetUniformLocation(program, "myTexture2"), 1);
+
 		glUseProgram(program);
+
 		glUniformMatrix4fv(transLocation, 1, GL_FALSE, glm::value_ptr(trans));
 		glUniformMatrix4fv(modelUni, 1, GL_FALSE, glm::value_ptr(model));
 		glUniformMatrix4fv(viewUni, 1, GL_FALSE, glm::value_ptr(view));
 		glUniformMatrix4fv(projUni, 1, GL_FALSE, glm::value_ptr(proj));
 		glUniform1f(time, glfwGetTime());
 		glBindVertexArray(VAO);
-
+		
 		for (GLuint i = 0; i < 10; i++)
 		{
 			model = glm::mat4();
@@ -310,15 +295,17 @@ int main()
 			glUniformMatrix4fv(modelUni, 1, GL_FALSE, glm::value_ptr(model));
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 		}
-		/*
+		
 		//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
-		*/
+		//glDrawArrays(GL_TRIANGLES, 0, 36);
+		
 		glBindVertexArray(0);
 		glBindTexture(GL_TEXTURE_2D, 0);
 
 		glfwSwapBuffers(window);
 	}
+	glDeleteVertexArrays(1, &VAO);
+	glDeleteBuffers(1, &VBO);
 
 	glfwTerminate();
 	return 0;
