@@ -18,8 +18,8 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mode)
 
 void mouse(GLFWwindow* window, double xpos, double ypos)
 {
-	/*Camera* cam = (Camera*)glfwGetWindowUserPointer(window);
-	cam->ProcessMouseMovement()*/
+	Camera* cam = (Camera*)glfwGetWindowUserPointer(window);
+	cam->ProcessMouseMovement(xpos, ypos);
 }
 
 void mouseButtons(GLFWwindow* window, int button, int action, int mods)
@@ -36,32 +36,45 @@ void scroll(GLFWwindow* window, double xOff, double yOff)
 
 GLFWwindow* initWindow()
 {
+	//Initialize GLFW
 	glfwInit();
+
+	//Setup the window properties, to use OpenGL 3.3 and restrain it to the core profile
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
+
+
+	//Create the window
 	GLFWwindow* window = glfwCreateWindow(800, 600, "Learn OpenGL", nullptr, nullptr);
 	if (window == nullptr)
 	{
 		glfwTerminate();
 		return nullptr;
 	}
+	
 	glfwMakeContextCurrent(window);
-	//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+	//More window options
+	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glfwSetWindowPos(window, 500, 100);
+
+	//Setup all the callback functions
 	glfwSetKeyCallback(window, keyboard);
 	glfwSetCursorPosCallback(window, mouse);
 	glfwSetMouseButtonCallback(window, mouseButtons);
 	glfwSetScrollCallback(window, scroll);
-
+	
+	//Initialize GLEW and make sure glewExperimental is true for OpenGL 3.3
 	glewExperimental = GL_TRUE;
 	if (glewInit() != GLEW_OK)
 	{
 		std::cout << "Failed to initialize GLEW." << std::endl;
 		return nullptr;
 	}
+	glEnable(GL_DEPTH_TEST);
 	return window;
 }
 
@@ -71,8 +84,10 @@ Camera initCamera()
 	return cam;
 }
 
-void handleMovement(GLFWwindow* window, Camera* camera, GLfloat deltaTime)
+void handleMovement(GLFWwindow* window, GLfloat deltaTime)
 {
+	Camera* camera = (Camera*)glfwGetWindowUserPointer(window);
+
 	if (glfwGetKey(window, GLFW_KEY_W))
 		camera->ProcessKeyboard(FORWARD, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_S))
@@ -107,68 +122,73 @@ int main()
 
 #pragma region Verts
 	GLfloat verts[] = {
-		-0.5f, -0.5f, -0.5f,
-		0.5f, -0.5f, -0.5f,
-		0.5f, 0.5f, -0.5f,
-		0.5f, 0.5f, -0.5f,
-		-0.5f, 0.5f, -0.5f,
-		-0.5f, -0.5f, -0.5f,
+		-0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
+		0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
+		0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
+		0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
+		-0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
+		-0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
 
-		-0.5f, -0.5f, 0.5f,
-		0.5f, -0.5f, 0.5f,
-		0.5f, 0.5f, 0.5f,
-		0.5f, 0.5f, 0.5f,
-		-0.5f, 0.5f, 0.5f,
-		-0.5f, -0.5f, 0.5f,
+		-0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
+		0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
+		0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
+		0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
+		-0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
+		-0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
 
-		-0.5f, 0.5f, 0.5f,
-		-0.5f, 0.5f, -0.5f,
-		-0.5f, -0.5f, -0.5f,
-		-0.5f, -0.5f, -0.5f,
-		-0.5f, -0.5f, 0.5f,
-		-0.5f, 0.5f, 0.5f,
+		-0.5f, 0.5f, 0.5f, -1.0f, 0.0f, 0.0f,
+		-0.5f, 0.5f, -0.5f, -1.0f, 0.0f, 0.0f,
+		-0.5f, -0.5f, -0.5f, -1.0f, 0.0f, 0.0f,
+		-0.5f, -0.5f, -0.5f, -1.0f, 0.0f, 0.0f,
+		-0.5f, -0.5f, 0.5f, -1.0f, 0.0f, 0.0f,
+		-0.5f, 0.5f, 0.5f, -1.0f, 0.0f, 0.0f,
 
-		0.5f, 0.5f, 0.5f,
-		0.5f, 0.5f, -0.5f,
-		0.5f, -0.5f, -0.5f,
-		0.5f, -0.5f, -0.5f,
-		0.5f, -0.5f, 0.5f,
-		0.5f, 0.5f, 0.5f,
+		0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f,
+		0.5f, 0.5f, -0.5f, 1.0f, 0.0f, 0.0f,
+		0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f,
+		0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f,
+		0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0.0f,
+		0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f,
 
-		-0.5f, -0.5f, -0.5f,
-		0.5f, -0.5f, -0.5f,
-		0.5f, -0.5f, 0.5f,
-		0.5f, -0.5f, 0.5f,
-		-0.5f, -0.5f, 0.5f,
-		-0.5f, -0.5f, -0.5f,
+		-0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f,
+		0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f,
+		0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f,
+		0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f,
+		-0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f,
+		-0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f,
 
-		-0.5f, 0.5f, -0.5f,
-		0.5f, 0.5f, -0.5f,
-		0.5f, 0.5f, 0.5f,
-		0.5f, 0.5f, 0.5f,
-		-0.5f, 0.5f, 0.5f,
-		-0.5f, 0.5f, -0.5f
+		-0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
+		0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
+		0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f,
+		0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f,
+		-0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f,
+		-0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f
 	};
 #pragma endregion
 	
 	//Shader Compilation
-	GLuint program = compileShaders("..\\OpenGL3-3\\shaders\\tut8.vert.glsl", "..\\OpenGL3-3\\shaders\\tut8.frag.glsl");
+	GLuint program = compileShaders("..\\OpenGL3-3\\shaders\\basicLighting.vert.glsl", "..\\OpenGL3-3\\shaders\\basicLighting.frag.glsl");
 	GLuint basicProgram = compileShaders("..\\OpenGL3-3\\shaders\\basic.vert.glsl", "..\\OpenGL3-3\\shaders\\basic.frag.glsl");
 
 	//VAO Data
 	glBindVertexArray(VAO);
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)0);
 		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+		glEnableVertexAttribArray(1);
 	glBindVertexArray(0);
 
 	//LightVAO Data
 	glBindVertexArray(LightVAO);
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)0);
 		glEnableVertexAttribArray(0);
 	glBindVertexArray(0);
+
+	//Other light data
+	glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
 
 	//Setting up the camera
 	Camera cam = initCamera();
@@ -181,12 +201,14 @@ int main()
 	proj = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 100.0f);
 
 	//Setup Uniform locations
-	GLuint modelUniform, viewUniform, projUniform;
-	GLuint modelUniform2, viewUniform2, projUniform2;
-	GLuint objectColor, lightColor;
+	GLint modelUniform, viewUniform, projUniform;
+	GLint modelUniform2, viewUniform2, projUniform2;
+	GLint objectColor, lightColor, lightPosUniform, viewerPositonUniform;
 	modelUniform = glGetUniformLocation(program, "model");
 	viewUniform = glGetUniformLocation(program, "view");
 	projUniform = glGetUniformLocation(program, "proj");
+	lightPosUniform = glGetUniformLocation(program, "lightPos");
+	viewerPositonUniform = glGetUniformLocation(program, "viewPos");
 
 	modelUniform2 = glGetUniformLocation(basicProgram, "model");
 	viewUniform2 = glGetUniformLocation(basicProgram, "view");
@@ -207,7 +229,7 @@ int main()
 		glfwPollEvents();
 
 		//Set the background color of the scene.
-		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
 		//Clear the color and depth buffers
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -218,27 +240,51 @@ int main()
 		//Update the projection matrix with camera fov
 		proj = glm::perspective(glm::radians(cam.Zoom), (float)width / (float)height, 0.1f, 100.0f);
 
+		//Bind the program for use
+		glUseProgram(program);
+
 		//Set Uniform Data
-		glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model));
+		//glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model));
 		glUniformMatrix4fv(viewUniform, 1, GL_FALSE, glm::value_ptr(view));
 		glUniformMatrix4fv(projUniform, 1, GL_FALSE, glm::value_ptr(proj));
-		
-		glUniformMatrix4fv(modelUniform2, 1, GL_FALSE, glm::value_ptr(model));
+
+		glUniform3f(objectColor, 1.0f, 0.5f, 0.31f);
+		glUniform3f(lightColor, 1.0f, 1.0f, 1.0f);
+		glUniform3f(lightPosUniform, lightPos.x, lightPos.y, lightPos.z);
+		glUniform3f(viewerPositonUniform, cam.Position.x, cam.Position.y, cam.Position.z);
+
+		glUseProgram(basicProgram);
+
+		//glUniformMatrix4fv(modelUniform2, 1, GL_FALSE, glm::value_ptr(model));
 		glUniformMatrix4fv(viewUniform2, 1, GL_FALSE, glm::value_ptr(view));
 		glUniformMatrix4fv(projUniform2, 1, GL_FALSE, glm::value_ptr(proj));
 		
-		glUniform3fv(objectColor, 1, glm::value_ptr(glm::vec3(1.0f, 0.5f, 0.31f)));
-		glUniform3fv(lightColor, 1, glm::value_ptr(glm::vec3(1.0f, 1.0f, 1.0f)));
-		//Bind the program for use
-		glUseProgram(program);
-		handleMovement(window, &cam, deltaTime);
+
+		//Handle movement with the keys
+		handleMovement(window, deltaTime);
+
 		//Bind the Vertex Array
 		glBindVertexArray(VAO);
-		glUseProgram(program);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
 
-		glUseProgram(basicProgram);
-		glDrawArrays(GL_LINE_LOOP, 0, 36);
+			//Draw the object(Cube)
+			glUseProgram(program);
+			model = glm::mat4();
+			glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model));
+			glm::mat4 model2 = glm::mat4();
+			model2 = glm::rotate(model2, (GLfloat)glfwGetTime()*glm::radians(50.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+			model2 = glm::translate(model2, lightPos);
+			model2 = glm::scale(model2, glm::vec3(0.2f));
+			glUniformMatrix4fv(glGetUniformLocation(program, "model2"), 1, GL_FALSE, glm::value_ptr(model2));
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+			
+			//Draw the light
+			glUseProgram(basicProgram);
+			model = glm::mat4();
+			model = glm::rotate(model, (GLfloat)glfwGetTime()*glm::radians(50.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+			model = glm::translate(model, lightPos);
+			model = glm::scale(model, glm::vec3(0.2f));
+			glUniformMatrix4fv(modelUniform2, 1, GL_FALSE, glm::value_ptr(model));
+			glDrawArrays(GL_TRIANGLES, 0, 36);
 		glBindVertexArray(0);
 
 		//Swap between front and back buffers.

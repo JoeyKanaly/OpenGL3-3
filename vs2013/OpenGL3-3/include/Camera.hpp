@@ -45,6 +45,10 @@ public:
 	GLfloat MouseSensitivity;
 	GLfloat Zoom;
 
+	bool firstMouse;
+	glm::vec2 lastPosition;
+
+
 	// Constructor with vectors
 	Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), GLfloat yaw = YAW, GLfloat pitch = PITCH) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVTY), Zoom(ZOOM)
 	{
@@ -85,13 +89,26 @@ public:
 	}
 
 	// Processes input received from a mouse input system. Expects the offset value in both the x and y direction.
-	void ProcessMouseMovement(GLfloat xoffset, GLfloat yoffset, GLboolean constrainPitch = true)
+	void ProcessMouseMovement(GLfloat xpos, GLfloat ypos, GLboolean constrainPitch = true)
 	{
-		xoffset *= this->MouseSensitivity;
-		yoffset *= this->MouseSensitivity;
+		if (firstMouse)
+		{
+			lastPosition.x = xpos;
+			lastPosition.y = ypos;
+			firstMouse = false;
+		}
 
-		this->Yaw += xoffset;
-		this->Pitch += yoffset;
+		glm::vec2 offset;
+		offset.x = xpos - lastPosition.x;
+		offset.y = lastPosition.y - ypos;
+		lastPosition.x = xpos;
+		lastPosition.y = ypos;
+
+		offset.x *= this->MouseSensitivity;
+		offset.y *= this->MouseSensitivity;
+
+		this->Yaw += offset.x;
+		this->Pitch += offset.y;
 
 		// Make sure that when pitch is out of bounds, screen doesn't get flipped
 		if (constrainPitch)
