@@ -9,7 +9,7 @@ uniform mat4 proj;
 
 out vec3 FragPos;
 out vec3 normal;
-out vec3 newLightPosition;
+
 void main()
 {
 	gl_Position = proj * view * model * vec4(position, 1.0f);
