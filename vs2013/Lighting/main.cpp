@@ -80,7 +80,7 @@ GLFWwindow* initWindow()
 
 Camera initCamera()
 {
-	Camera cam = Camera(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	Camera cam = Camera(glm::vec3(0.0f, 0.0f, 3.0f));
 	return cam;
 }
 
@@ -174,7 +174,7 @@ int main()
 	//Load the images
 	int imgWidth, imgHeight;
 	GLuint diffuseMap = loadTexture("../OpenGL3-3/images/container2.png");
-
+	GLuint specMap = loadTexture("../OpenGL3-3/images/container2_specular2.png");
 
 	//VAO Data
 	glBindVertexArray(VAO);
@@ -224,7 +224,6 @@ int main()
 	lightDiffuse = glGetUniformLocation(program, "light.diffuse");
 	lightSpecular = glGetUniformLocation(program, "light.specular");
 
-	matAmbient = glGetUniformLocation(program, "material.ambient");
 	matDiffuse = glGetUniformLocation(program, "material.diffuse");
 	matSpecular = glGetUniformLocation(program, "material.specular");
 	matShine = glGetUniformLocation(program, "material.shine");
@@ -271,25 +270,28 @@ int main()
 		glUniform3f(lightPosUniform, lightPos.x, lightPos.y, lightPos.z);
 		glUniform3f(viewerPositonUniform, cam.Position.x, cam.Position.y, cam.Position.z);
 
-		glm::vec3 lightColor;
+		/*glm::vec3 lightColor;
 		lightColor.x = sin(glfwGetTime() * 2.0f);
 		lightColor.y = sin(glfwGetTime() * 0.7f);
 		lightColor.z = sin(glfwGetTime() * 1.3f);
 		glm::vec3 diffuseColor = lightColor * glm::vec3(0.5f); // Decrease the influence
-		glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f); // Low influence
-		glUniform3f(lightAmbient, 1.0f, 1.0f, 1.0f);
-		glUniform3f(lightDiffuse, 1.0f, 1.0f, 1.0f);
+		glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f); // Low influence*/
+		glUniform3f(lightAmbient, 0.2f, 0.2f, 0.2f);
+		glUniform3f(lightDiffuse, 0.5f, 0.5f, 0.5f);
 		glUniform3f(lightSpecular, 1.0f, 1.0f, 1.0f);
+
 		// Set material properties
-		glUniform3f(matAmbient, 0.0215, 0.1745f, 0.0215f);
 		//glUniform3f(matDiffuse, 0.07568f, 0.61424f, 0.07568f);
 		glUniform1i(matDiffuse, 0);
-		glUniform3f(matSpecular, 0.633f, 0.727811f, 0.633f); // Specular doesn't have full effect on this object's material
-		glUniform1f(matShine, 32.0f);
+		glUniform1i(matSpecular, 1);
+		//glUniform3f(matSpecular, 0.5f, 0.5f, 0.5f); // Specular doesn't have full effect on this object's material
+		glUniform1f(matShine, 64.0f);
 		
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, diffuseMap);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, specMap);
 
 
 		//Bind the Vertex Array
