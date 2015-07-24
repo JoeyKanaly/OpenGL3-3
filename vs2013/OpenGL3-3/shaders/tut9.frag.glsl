@@ -21,8 +21,9 @@ in vec2 TexCoords;
 
 uniform Material material;
 uniform Light light;
+uniform vec3 viewPos;
 
-out vec3 color;
+out vec4 color;
 
 void main()
 {
