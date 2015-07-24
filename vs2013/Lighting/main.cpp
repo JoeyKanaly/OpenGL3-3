@@ -188,7 +188,7 @@ int main()
 	glBindVertexArray(0);
 
 	//Other light data
-	glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
+	glm::vec3 lightPos =glm::vec3(1.2f, 1.0f, 2.0f);
 
 	//Setting up the camera
 	Camera cam = initCamera();
@@ -236,6 +236,9 @@ int main()
 		//Poll for events such as mouse and keyboard input.
 		glfwPollEvents();
 
+		//Handle movement with the keys
+		handleMovement(window, deltaTime);
+
 		//Set the background color of the scene.
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
@@ -252,41 +255,41 @@ int main()
 		glUseProgram(program);
 
 		//Set Uniform Data
-		//glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model));
+		model = glm::mat4();
+		glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model));
 		glUniformMatrix4fv(viewUniform, 1, GL_FALSE, glm::value_ptr(view));
 		glUniformMatrix4fv(projUniform, 1, GL_FALSE, glm::value_ptr(proj));
 
-		glUniform3f(lightAmbient, 0.2f, 0.2f, 0.2f);
-		glUniform3f(lightDiffuse, 0.5f, 0.5f, 0.5f);
-		glUniform3f(lightSpecular, 1.0f, 1.0f, 1.0f);
 		glUniform3f(lightPosUniform, lightPos.x, lightPos.y, lightPos.z);
 		glUniform3f(viewerPositonUniform, cam.Position.x, cam.Position.y, cam.Position.z);
-		glUniform3f(matAmbient, 1.0f, 0.5f, 0.31f);
-		glUniform3f(matDiffuse, 1.0f, 0.5f, 0.31f);
-		glUniform3f(matSpecular, 0.5f, 0.5f, 0.5f);
+
+		glm::vec3 lightColor;
+		lightColor.x = sin(glfwGetTime() * 2.0f);
+		lightColor.y = sin(glfwGetTime() * 0.7f);
+		lightColor.z = sin(glfwGetTime() * 1.3f);
+		glm::vec3 diffuseColor = lightColor * glm::vec3(0.5f); // Decrease the influence
+		glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f); // Low influence
+		glUniform3f(lightAmbient, 1.0f, 1.0f, 1.0f);
+		glUniform3f(lightDiffuse, 1.0f, 1.0f, 1.0f);
+		glUniform3f(lightSpecular, 1.0f, 1.0f, 1.0f);
+		// Set material properties
+		glUniform3f(matAmbient, 0.0215, 0.1745f, 0.0215f);
+		glUniform3f(matDiffuse, 0.07568f, 0.61424f, 0.07568f);
+		glUniform3f(matSpecular, 0.633f, 0.727811f, 0.633f); // Specular doesn't have full effect on this object's material
 		glUniform1f(matShine, 32.0f);
-
-		glUseProgram(basicProgram);
-
-		//glUniformMatrix4fv(modelUniform2, 1, GL_FALSE, glm::value_ptr(model));
-		glUniformMatrix4fv(viewUniform2, 1, GL_FALSE, glm::value_ptr(view));
-		glUniformMatrix4fv(projUniform2, 1, GL_FALSE, glm::value_ptr(proj));
 		
 
-		//Handle movement with the keys
-		handleMovement(window, deltaTime);
 
 		//Bind the Vertex Array
 		glBindVertexArray(VAO);
 
 			//Draw the object(Cube)
-			glUseProgram(program);
-			model = glm::mat4();
-			glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model));
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 			
 			//Draw the light
-			glUseProgram(basicProgram);
+		glUseProgram(basicProgram);
+			glUniformMatrix4fv(viewUniform2, 1, GL_FALSE, glm::value_ptr(view));
+			glUniformMatrix4fv(projUniform2, 1, GL_FALSE, glm::value_ptr(proj));
 			model = glm::mat4();
 			model = glm::translate(model, lightPos);
 			model = glm::scale(model, glm::vec3(0.2f));
