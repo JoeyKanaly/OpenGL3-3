@@ -73,6 +73,7 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\OpenGL3-3\include\Light.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
