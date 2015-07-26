@@ -183,13 +183,13 @@ int main()
 #pragma endregion
 
 	//Shader Compilation
-	GLuint program = compileShaders("..\\OpenGL3-3\\shaders\\lighting\\simple.vert.glsl", "..\\OpenGL3-3\\shaders\\lighting\\point.frag.glsl");
+	GLuint program = compileShaders("..\\OpenGL3-3\\shaders\\lighting\\simple.vert.glsl", "..\\OpenGL3-3\\shaders\\lighting\\spotlight.frag.glsl");
 	GLuint basicProgram = compileShaders("..\\OpenGL3-3\\shaders\\basic.vert.glsl", "..\\OpenGL3-3\\shaders\\basic.frag.glsl");
 
 	//Load the images
 	int imgWidth, imgHeight;
 	GLuint diffuseMap = loadTexture("../OpenGL3-3/images/container2.png");
-	GLuint specMap = loadTexture("../OpenGL3-3/images/container2_specular.png");
+	GLuint specMap = loadTexture("../OpenGL3-3/images/container2_specular2.png");
 
 	//VAO Data
 	glBindVertexArray(VAO);
@@ -229,7 +229,7 @@ int main()
 	GLint lightPosUniform, viewerPositonUniform;
 	GLint matAmbient, matDiffuse, matSpecular, matShine;
 	GLint lightAmbient, lightDiffuse, lightSpecular;
-	GLint lightDir;
+	GLint lightDir, lightCutOff, lightOuterCutOff;
 	GLint lightConst, lightLinear, lightQuadratic;
 	modelUniform = glGetUniformLocation(program, "model");
 	viewUniform = glGetUniformLocation(program, "view");
@@ -237,9 +237,17 @@ int main()
 	viewerPositonUniform = glGetUniformLocation(program, "viewPos");
 
 	lightPosUniform = glGetUniformLocation(program, "light.position");
+	lightDir = glGetUniformLocation(program, "light.direction");
+	lightCutOff = glGetUniformLocation(program, "light.cutOff");
+	lightOuterCutOff = glGetUniformLocation(program, "light.outerCutOff");
+
 	lightAmbient = glGetUniformLocation(program, "light.ambient");
 	lightDiffuse = glGetUniformLocation(program, "light.diffuse");
 	lightSpecular = glGetUniformLocation(program, "light.specular");
+
+	lightConst = glGetUniformLocation(program, "light.constant");
+	lightLinear = glGetUniformLocation(program, "light.linear");
+	lightQuadratic = glGetUniformLocation(program, "light.quadratic");
 
 	matDiffuse = glGetUniformLocation(program, "material.diffuse");
 	matSpecular = glGetUniformLocation(program, "material.specular");
@@ -248,12 +256,6 @@ int main()
 	modelUniform2 = glGetUniformLocation(basicProgram, "model");
 	viewUniform2 = glGetUniformLocation(basicProgram, "view");
 	projUniform2 = glGetUniformLocation(basicProgram, "proj");
-
-	lightDir = glGetUniformLocation(program, "light.direction");
-	lightConst = glGetUniformLocation(program, "light.constant");
-	lightLinear = glGetUniformLocation(program, "light.linear");
-	lightQuadratic = glGetUniformLocation(program, "light.quadratic");
-
 	//Game Loop
 	while (!glfwWindowShouldClose(window))
 	{
@@ -291,14 +293,16 @@ int main()
 		glUniform3f(viewerPositonUniform, cam.Position.x, cam.Position.y, cam.Position.z);
 
 		//Set light properties
-		glUniform3f(lightPosUniform, lightPos.x, lightPos.y, lightPos.z);
-		//glUniform3f(lightDir, -0.2f, -1.0f, -0.3f);
+		glUniform3f(lightPosUniform, cam.Position.x, cam.Position.y, cam.Position.z);
+		glUniform3f(lightDir, cam.Front.x, cam.Front.y, cam.Front.z);
+		glUniform1f(lightCutOff, cos(glm::radians(12.5f)));
+		glUniform1f(lightOuterCutOff, cos(glm::radians(17.5f)));
 		glUniform3f(lightAmbient, 0.2f, 0.2f, 0.2f);
 		glUniform3f(lightDiffuse, 0.5f, 0.5f, 0.5f);
 		glUniform3f(lightSpecular, 1.0f, 1.0f, 1.0f);
 		glUniform1f(lightConst, 1.0f);
-		glUniform1f(lightLinear, 0.09f);
-		glUniform1f(lightQuadratic, 0.032f);
+		glUniform1f(lightLinear, 0.045f);
+		glUniform1f(lightQuadratic, 0.0075f);
 
 		// Set material properties
 		glUniform1i(matDiffuse, 0);
@@ -326,16 +330,16 @@ int main()
 				glDrawArrays(GL_TRIANGLES, 0, 36);
 			}
 
-			//Draw the light
-			glUseProgram(basicProgram);
+			////Draw the light
+			//glUseProgram(basicProgram);
 
-			glUniformMatrix4fv(viewUniform2, 1, GL_FALSE, glm::value_ptr(view));
-			glUniformMatrix4fv(projUniform2, 1, GL_FALSE, glm::value_ptr(proj));
-			model = glm::mat4();
-			model = glm::translate(model, lightPos);
-			model = glm::scale(model, glm::vec3(0.2f));
-			glUniformMatrix4fv(modelUniform2, 1, GL_FALSE, glm::value_ptr(model));
-			glDrawArrays(GL_TRIANGLES, 0, 36);
+			//glUniformMatrix4fv(viewUniform2, 1, GL_FALSE, glm::value_ptr(view));
+			//glUniformMatrix4fv(projUniform2, 1, GL_FALSE, glm::value_ptr(proj));
+			//model = glm::mat4();
+			//model = glm::translate(model, lightPos);
+			//model = glm::scale(model, glm::vec3(0.2f));
+			//glUniformMatrix4fv(modelUniform2, 1, GL_FALSE, glm::value_ptr(model));
+			//glDrawArrays(GL_TRIANGLES, 0, 36);
 		glBindVertexArray(0);
 
 		//Swap between front and back buffers.
