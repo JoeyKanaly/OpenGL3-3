@@ -1,7 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OpenGL3-3", "OpenGL3-3\OpenGL3-3.vcxproj", "{F0744458-A88A-4008-9F1F-B461365751BD}"
+# Visual Studio 2013
+VisualStudioVersion = 12.0.31101.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OpenGL3-3", "OpenGL3-3\OpenGL3-3.vcxproj", "{08A47D4A-CF5D-4DDE-8324-5E067FA99D85}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Lighting", "Lighting\Lighting.vcxproj", "{57FDB4BF-F725-4765-9BC8-117A3F04D082}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -9,10 +13,15 @@ Global
 		Release|Win32 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{F0744458-A88A-4008-9F1F-B461365751BD}.Debug|Win32.ActiveCfg = Debug|Win32
-		{F0744458-A88A-4008-9F1F-B461365751BD}.Debug|Win32.Build.0 = Debug|Win32
-		{F0744458-A88A-4008-9F1F-B461365751BD}.Release|Win32.ActiveCfg = Release|Win32
-		{F0744458-A88A-4008-9F1F-B461365751BD}.Release|Win32.Build.0 = Release|Win32
+		{08A47D4A-CF5D-4DDE-8324-5E067FA99D85}.Debug|Win32.ActiveCfg = Debug|Win32
+		{08A47D4A-CF5D-4DDE-8324-5E067FA99D85}.Debug|Win32.Build.0 = Debug|Win32
+		{08A47D4A-CF5D-4DDE-8324-5E067FA99D85}.Release|Win32.ActiveCfg = Release|Win32
+		{08A47D4A-CF5D-4DDE-8324-5E067FA99D85}.Release|Win32.Build.0 = Release|Win32
+		{08A47D4A-CF5D-4DDE-8324-5E067FA99D85}.Release|Win32.Deploy.0 = Release|Win32
+		{57FDB4BF-F725-4765-9BC8-117A3F04D082}.Debug|Win32.ActiveCfg = Debug|Win32
+		{57FDB4BF-F725-4765-9BC8-117A3F04D082}.Debug|Win32.Build.0 = Debug|Win32
+		{57FDB4BF-F725-4765-9BC8-117A3F04D082}.Release|Win32.ActiveCfg = Release|Win32
+		{57FDB4BF-F725-4765-9BC8-117A3F04D082}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

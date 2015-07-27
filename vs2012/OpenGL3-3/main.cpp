@@ -57,20 +57,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mode)
 
 void mouse(GLFWwindow* window, double xpos, double ypos)
 {
-	
-	if (firstMouse)
-	{
-		lastPosition.x = xpos;
-		lastPosition.y = ypos;
-		firstMouse = false;
-	}
-	
-	glm::vec2 offset;
-	offset.x = xpos - lastPosition.x;
-	offset.y = lastPosition.y - ypos;
-	lastPosition.x = xpos;
-	lastPosition.y = ypos;
-	cam.ProcessMouseMovement(offset.x, offset.y);
+	cam.ProcessMouseMovement(xpos, ypos);
 }
 
 void mouseButtons(GLFWwindow* window, int button, int action, int mods)
