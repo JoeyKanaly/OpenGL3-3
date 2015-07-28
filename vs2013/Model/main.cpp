@@ -147,7 +147,8 @@ int main()
 	viewUniform = glGetUniformLocation(program, "view");
 	projUniform = glGetUniformLocation(program, "proj");
 
-	model = glm::scale(model, glm::vec3(0.5f));
+	model = glm::scale(model, glm::vec3(0.19f));
+	cam.Position = glm::vec3(cam.Position.x, cam.Position.y + 2.0f, cam.Position.z);
 
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
@@ -172,7 +173,7 @@ int main()
 		glUseProgram(program);
 		
 		// Set the uniform data
-		model = glm::rotate(model, glm::radians(2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		//model = glm::rotate(model, glm::radians(2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 		glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model));
 		glUniformMatrix4fv(viewUniform, 1, GL_FALSE, glm::value_ptr(view));
 		glUniformMatrix4fv(projUniform, 1, GL_FALSE, glm::value_ptr(projection));
