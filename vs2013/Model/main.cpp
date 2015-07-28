@@ -52,6 +52,7 @@ GLFWwindow* initWindow()
 	GLFWwindow* window = glfwCreateWindow(800, 600, "Learn OpenGL", nullptr, nullptr);
 	if (window == nullptr)
 	{
+		std::cout << "Unable to create window." << std::endl;
 		glfwTerminate();
 		return nullptr;
 	}
@@ -107,6 +108,7 @@ int main()
 	if (window == nullptr)
 	{
 		std::cout << "Unable to initialize the window, possible that OpenGL 3.3 isn't supported." << std::endl;
+		std::cin.get();
 		return -1;
 	}
 
@@ -132,7 +134,7 @@ int main()
 	glfwSetWindowUserPointer(window, &cam);
 
 	// Load the model
-	Model nanosuit("./models/creeper/creeper.blend");
+	Model nanosuit("./models/nanosuit/nanosuit.obj");
 
 	// Initialize the model, view, and projection matrix
 	glm::mat4 model, view, projection;
@@ -147,7 +149,7 @@ int main()
 
 	model = glm::scale(model, glm::vec3(0.5f));
 
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -170,7 +172,7 @@ int main()
 		glUseProgram(program);
 		
 		// Set the uniform data
-		//model = glm::rotate(model, glm::radians(2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::rotate(model, glm::radians(2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 		glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model));
 		glUniformMatrix4fv(viewUniform, 1, GL_FALSE, glm::value_ptr(view));
 		glUniformMatrix4fv(projUniform, 1, GL_FALSE, glm::value_ptr(projection));

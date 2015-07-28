@@ -24,6 +24,8 @@ bld/
 !vs201[23]/OpenGL3-3/lib/Release
 !vs201[23]/OpenGL3-3/lib/Release/x64
 !vs201[23]/OpenGL3-3/lib/Release MX/x64
+!vs201[23]/OpenGL3-3/lib/assimp.lib
+!vs201[23]/OpenGL3-3/lib/assimp.dll
 # Visual Studo 2015 cache/options directory
 .vs/
 
