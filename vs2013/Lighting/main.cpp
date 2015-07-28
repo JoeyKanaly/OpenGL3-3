@@ -59,7 +59,7 @@ GLFWwindow* initWindow()
 
 	//More window options
 	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
-	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glfwSetWindowPos(window, 500, 100);
 
 	//Setup all the callback functions
@@ -104,7 +104,10 @@ int main()
 	//Window Initialization
 	GLFWwindow* window = initWindow();
 	if (window == nullptr)
+	{
 		std::cout << "Unable to initialize window, possible that OpenGL 3.3 isn't supported." << std::endl;
+		return -1;
+	}
 
 	//Start Timer
 	GLfloat deltaTime, lastFrame, currentFrame;
@@ -287,7 +290,7 @@ int main()
 		glUniformMatrix4fv(projUniform, 1, GL_FALSE, glm::value_ptr(proj));
 		glUniform3f(viewerPositonUniform, cam.Position.x, cam.Position.y, cam.Position.z);
 
-		//Set spotlight properties
+		//Set spotlight uniform properties
 		glUniform3f(glGetUniformLocation(program, "spotLight.position"), cam.Position.x, cam.Position.y, cam.Position.z);
 		glUniform3f(glGetUniformLocation(program, "spotLight.direction"), cam.Front.x, cam.Front.y, cam.Front.z);
 		glUniform3f(glGetUniformLocation(program, "spotLight.ambient"), 0.0f, 0.0f, 0.0f);
@@ -299,7 +302,7 @@ int main()
 		glUniform1f(glGetUniformLocation(program, "spotLight.cutOff"), cos(glm::radians(12.5f)));
 		glUniform1f(glGetUniformLocation(program, "spotLight.outerCutOff"), cos(glm::radians(15.0f)));
 
-		//Set directional light properties
+		//Set directional light uniform properties
 		glUniform3f(glGetUniformLocation(program, "dirLight.direction"), -0.2f, -1.0f, -0.3f);
 		glUniform3f(glGetUniformLocation(program, "dirLight.ambient"), 0.05f, 0.05f, 0.05f);
 		glUniform3f(glGetUniformLocation(program, "dirLight.diffuse"), 0.4f, 0.4f, 0.4f);
@@ -319,7 +322,7 @@ int main()
 			glUniform1f(glGetUniformLocation(program, ss.str().append(".quadratic").c_str()), 0.032f);
 		}
 
-		// Set material properties
+		// Set material uniform properties
 		glUniform1i(matDiffuse, 0);
 		glUniform1i(matSpecular, 1);
 		glUniform1f(matShine, 64.0f);
