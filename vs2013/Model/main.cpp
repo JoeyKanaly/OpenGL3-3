@@ -12,10 +12,21 @@
 #include <Model.h>
 #include <Tools.h>
 
+bool wireframe;
+
 void keyboard(GLFWwindow* window, int key, int scancode, int action, int mode)
 {
+	Camera* cam = (Camera*)glfwGetWindowUserPointer(window);
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, 1);
+	if (key == GLFW_KEY_SPACE)
+		cam->Position.y += .01f;
+	if (key == GLFW_KEY_LEFT_SHIFT || key == GLFW_KEY_RIGHT_SHIFT)
+		cam->Position.y -= .01f;
+	if (key == GLFW_KEY_P && action == GLFW_RELEASE)
+		printf("%f, %f, %f", cam->Position.x, cam->Position.y, cam->Position.z);
+	if (key == GLFW_KEY_X && action == GLFW_RELEASE)
+		wireframe = !wireframe;
 }
 
 void mouse(GLFWwindow* window, double xpos, double ypos)
@@ -78,6 +89,7 @@ GLFWwindow* initWindow()
 		return nullptr;
 	}
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_CULL_FACE);
 	return window;
 }
 
@@ -134,7 +146,8 @@ int main()
 	glfwSetWindowUserPointer(window, &cam);
 
 	// Load the model
-	Model nanosuit("./models/nanosuit/nanosuit.obj");
+	bool hasLoaded = false;
+	Model nanosuit;
 
 	// Initialize the model, view, and projection matrix
 	glm::mat4 model, view, projection;
@@ -147,9 +160,9 @@ int main()
 	viewUniform = glGetUniformLocation(program, "view");
 	projUniform = glGetUniformLocation(program, "proj");
 
-	model = glm::scale(model, glm::vec3(0.5f));
+	//cam.Position = glm::vec3(0.0f, 1.9f, 5.8f);
 
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	//glfwSetCursorPos(window, width / 2, height / 2);
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -167,17 +180,28 @@ int main()
 		handleMovement(window, deltaTime);
 		// Update the view matrix with the camera data
 		view = cam.GetViewMatrix();
-
+		if (!hasLoaded)
+		{
+			nanosuit = Model("./models/porn/scene.obj");
+			hasLoaded = true;
+		}
 		// Use the shader program
 		glUseProgram(program);
 		
 		// Set the uniform data
-		model = glm::rotate(model, glm::radians(2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::mat4();
+		model = glm::scale(model, glm::vec3(0.1f));
+		
+		//model = glm::rotate(model, glm::radians(20.0f) * (float) glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
+		//model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 		glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model));
 		glUniformMatrix4fv(viewUniform, 1, GL_FALSE, glm::value_ptr(view));
 		glUniformMatrix4fv(projUniform, 1, GL_FALSE, glm::value_ptr(projection));
 		glUniform1f(glGetUniformLocation(program, "time"), glfwGetTime());
-		
+		if (wireframe)
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		else
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		nanosuit.draw(program);
 
 		// Swap between the front and the back buffers

@@ -17,6 +17,10 @@
 class Model
 {
 public:
+	Model()
+	{
+
+	}
 	Model(GLchar* path);
 	void draw(GLuint program);
 private:
