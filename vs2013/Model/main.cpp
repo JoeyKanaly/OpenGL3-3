@@ -89,13 +89,14 @@ GLFWwindow* initWindow()
 		return nullptr;
 	}
 	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_CULL_FACE);
+	//glEnable(GL_CULL_FACE);
 	return window;
 }
 
 Camera initCamera()
 {
 	Camera cam = Camera(glm::vec3(0.0f, 0.0f, 3.0f));
+	//cam.MovementSpeed = 100.0f;
 	return cam;
 }
 
@@ -145,24 +146,32 @@ int main()
 	Camera cam = initCamera();
 	glfwSetWindowUserPointer(window, &cam);
 
+	glm::vec3 cubePositions[] = {
+		glm::vec3(0.0f, 0.0f, 0.0f),
+		glm::vec3(2.0f, 5.0f, -15.0f),
+		glm::vec3(-1.5f, -2.2f, -2.5f),
+		glm::vec3(-3.8f, -2.0f, -12.3f),
+		glm::vec3(2.4f, -0.4f, -3.5f),
+		glm::vec3(-1.7f, 3.0f, -7.5f),
+		glm::vec3(1.3f, -2.0f, -2.5f),
+		glm::vec3(1.5f, 2.0f, -2.5f),
+		glm::vec3(1.5f, 0.2f, -1.5f),
+		glm::vec3(-1.3f, 1.0f, -1.5f)
+	};
+
 	// Load the model
-	bool hasLoaded = false;
-	Model nanosuit;
+	Model dice[] = { Model("./models/dice/4.obj"), Model("./models/dice/6.obj"), Model("./models/dice/8.obj"), Model("./models/dice/12.obj"), Model("./models/dice/20.obj") };
 
 	// Initialize the model, view, and projection matrix
 	glm::mat4 model, view, projection;
 	view = cam.GetViewMatrix();
-	projection = glm::perspective(glm::radians(45.0f), (GLfloat)width / (GLfloat)height, 0.1f, 100.0f);
+	projection = glm::perspective(glm::radians(45.0f), (GLfloat)width / (GLfloat)height, 0.1f, 1000.0f);
 
 	// Setup the uniforms
 	GLint modelUniform, viewUniform, projUniform;
 	modelUniform = glGetUniformLocation(program, "model");
 	viewUniform = glGetUniformLocation(program, "view");
 	projUniform = glGetUniformLocation(program, "proj");
-
-	//cam.Position = glm::vec3(0.0f, 1.9f, 5.8f);
-
-	//glfwSetCursorPos(window, width / 2, height / 2);
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -180,21 +189,12 @@ int main()
 		handleMovement(window, deltaTime);
 		// Update the view matrix with the camera data
 		view = cam.GetViewMatrix();
-		if (!hasLoaded)
-		{
-			nanosuit = Model("./models/porn/scene.obj");
-			hasLoaded = true;
-		}
+
 		// Use the shader program
 		glUseProgram(program);
 		
 		// Set the uniform data
-		model = glm::mat4();
-		model = glm::scale(model, glm::vec3(0.1f));
-		
-		//model = glm::rotate(model, glm::radians(20.0f) * (float) glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
-		//model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-		glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model));
+		//glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model));
 		glUniformMatrix4fv(viewUniform, 1, GL_FALSE, glm::value_ptr(view));
 		glUniformMatrix4fv(projUniform, 1, GL_FALSE, glm::value_ptr(projection));
 		glUniform1f(glGetUniformLocation(program, "time"), glfwGetTime());
@@ -202,7 +202,16 @@ int main()
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		else
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		nanosuit.draw(program);
+		for (int i = 0; i < 5; i++)
+		{
+			model = glm::mat4();
+			model = glm::translate(model, glm::vec3(cubePositions[i].x * 0.5f, cubePositions[i].y * 0.5f, cubePositions[i].z * 0.5f));
+			model = glm::rotate(model, glm::radians(20.0f) * (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
+
+			model = glm::scale(model, glm::vec3(0.1f));
+			glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model));
+			dice[i].draw(program);
+		}
 
 		// Swap between the front and the back buffers
 		glfwSwapBuffers(window);
