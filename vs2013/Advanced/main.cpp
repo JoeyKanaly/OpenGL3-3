@@ -88,6 +88,7 @@ GLFWwindow* initWindow()
 	}
 	glEnable(GL_DEPTH_TEST);
 	//glEnable(GL_CULL_FACE);
+	//glEnable(GL_STENCIL_TEST);
 	return window;
 }
 
@@ -226,8 +227,8 @@ int main()
 	glUniformMatrix4fv(viewUniform, 1, GL_FALSE, glm::value_ptr(view));
 	glUniformMatrix4fv(projUniform, 1, GL_FALSE, glm::value_ptr(proj));
 
-	glDepthFunc(GL_GREATER);
-	
+	glDepthFunc(GL_LESS);
+	//glStencilFunc(GL_EQUAL, 1, 0x00);
 	while (!glfwWindowShouldClose(window))
 	{
 
@@ -237,7 +238,7 @@ int main()
 		lastFrame = currentFrame;
 
 		glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, container);
@@ -258,7 +259,7 @@ int main()
 			glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model));
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 
-
+			// Draw the floor
 			model = glm::mat4();
 			model = glm::translate(model, glm::vec3(0.0f, -5.5f, 0.0f));
 			model = glm::scale(model, glm::vec3(10.0f, 10.0f, 10.0f));
