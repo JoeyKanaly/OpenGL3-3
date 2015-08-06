@@ -88,7 +88,8 @@ GLFWwindow* initWindow()
 	}
 	glEnable(GL_DEPTH_TEST);
 	//glEnable(GL_CULL_FACE);
-	//glEnable(GL_STENCIL_TEST);
+	glEnable(GL_STENCIL_TEST);
+	//glFrontFace(GL_CCW);
 	return window;
 }
 
@@ -138,6 +139,7 @@ int main()
 
 	// Compile the shaders
 	GLuint program = compileShaders("../OpenGL3-3/shaders/advanced/template.vert.glsl", "../OpenGL3-3/shaders/advanced/template.frag.glsl");
+	GLuint program2 = compileShaders("../OpenGL3-3/shaders/advanced/template.vert.glsl", "../OpenGL3-3/shaders/advanced/outline.frag.glsl");
 
 	// Initalize and setup camera
 	Camera cam = initCamera();
@@ -218,8 +220,11 @@ int main()
 
 	// Get the uniform locations
 	GLint modelUniform = glGetUniformLocation(program, "model");
+	GLint modelUniform2 = glGetUniformLocation(program2, "model");
 	GLint viewUniform = glGetUniformLocation(program, "view");
+	GLint viewUniform2 = glGetUniformLocation(program2, "view");
 	GLint projUniform = glGetUniformLocation(program, "proj");
+	GLint projUniform2 = glGetUniformLocation(program2, "proj");
 
 	// Setup the initial data for the uniforms
 	glUseProgram(program);
@@ -227,10 +232,18 @@ int main()
 	glUniformMatrix4fv(viewUniform, 1, GL_FALSE, glm::value_ptr(view));
 	glUniformMatrix4fv(projUniform, 1, GL_FALSE, glm::value_ptr(proj));
 
+	glUseProgram(program2);
+	glUniformMatrix4fv(modelUniform2, 1, GL_FALSE, glm::value_ptr(model));
+	glUniformMatrix4fv(viewUniform2, 1, GL_FALSE, glm::value_ptr(view));
+	glUniformMatrix4fv(projUniform2, 1, GL_FALSE, glm::value_ptr(proj));
+
 	glDepthFunc(GL_LESS);
 	//glStencilFunc(GL_EQUAL, 1, 0x00);
+	GLfloat scale = 1.1f;
 	while (!glfwWindowShouldClose(window))
 	{
+		glEnable(GL_DEPTH_TEST);
+		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
 		glfwPollEvents();
 		currentFrame = glfwGetTime();
@@ -246,26 +259,49 @@ int main()
 
 		handleMovement(window, deltaTime);
 		view = cam.GetViewMatrix();
+		glUseProgram(program);
 		glUniformMatrix4fv(viewUniform, 1, GL_FALSE, glm::value_ptr(view));
 
-		glUseProgram(program);
 		glBindVertexArray(VAO);
+			
+			// Draw the Boxes
 			model = glm::mat4();
+			model = glm::translate(model, glm::vec3(0.0f, 0.01f, 0.0f));
+			glStencilFunc(GL_ALWAYS, 1, 0xFF);
+			glStencilMask(0xFF);
 			glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model));
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 
 			model = glm::mat4();
-			model = glm::translate(model, glm::vec3(1.5f, 0.0f, -1.0f));
+			model = glm::translate(model, glm::vec3(1.5f, 0.1f, -1.0f));
 			glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model));
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 
 			// Draw the floor
+			glStencilMask(0x00);
 			model = glm::mat4();
 			model = glm::translate(model, glm::vec3(0.0f, -5.5f, 0.0f));
 			model = glm::scale(model, glm::vec3(10.0f, 10.0f, 10.0f));
 			glBindTexture(GL_TEXTURE_2D, wall);
 			glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model));
 			glDrawArrays(GL_TRIANGLES, 0, 36);
+			
+			model = glm::mat4();
+			glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+			glDisable(GL_DEPTH_TEST);
+			glUseProgram(program2);
+			glUniformMatrix4fv(viewUniform2, 1, GL_FALSE, glm::value_ptr(view));
+			model = glm::translate(model, glm::vec3(0.0f, 0.01f, 0.0f));
+			model = glm::scale(model, glm::vec3(scale));
+			glUniformMatrix4fv(modelUniform2, 1, GL_FALSE, glm::value_ptr(model));
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+			model = glm::mat4();
+			model = glm::translate(model, glm::vec3(1.5f, 0.1f, -1.0f));
+			model = glm::scale(model, glm::vec3(scale));
+			glUniformMatrix4fv(modelUniform2, 1, GL_FALSE, glm::value_ptr(model));
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+			glStencilMask(0xFF);
+			glEnable(GL_DEPTH_TEST);
 
 		glBindVertexArray(0);
 
