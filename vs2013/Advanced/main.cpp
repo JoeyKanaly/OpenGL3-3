@@ -1,6 +1,7 @@
 #define GLEW_STATIC
 #include <iostream>
 #include <algorithm>
+#include <vector>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <SOIL/SOIL.h>
@@ -45,6 +46,14 @@ void scroll(GLFWwindow* window, double xOff, double yOff)
 	std::cout << "Mouse Scroll" << std::endl;
 }
 
+void enableSettings()
+{
+	glEnable(GL_DEPTH_TEST);
+	//glEnable(GL_CULL_FACE);
+	glEnable(GL_STENCIL_TEST);
+	glEnable(GL_BLEND);
+}
+
 GLFWwindow* initWindow()
 {
 	//Initialize GLFW
@@ -86,10 +95,7 @@ GLFWwindow* initWindow()
 		std::cout << "Failed to initialize GLEW." << std::endl;
 		return nullptr;
 	}
-	glEnable(GL_DEPTH_TEST);
-	//glEnable(GL_CULL_FACE);
-	glEnable(GL_STENCIL_TEST);
-	//glFrontFace(GL_CCW);
+	enableSettings();
 	return window;
 }
 
@@ -151,6 +157,7 @@ int main()
 	// Load any textures to be used
 	GLuint wall = loadTexture("../OpenGL3-3/images/wall.jpg");
 	GLuint container = loadTexture("../OpenGL3-3/images/container.jpg");
+	GLuint grassTexture = loadTexture("../OpenGL3-3/images/grass.png");
 
 #pragma region Verts
 	GLfloat verts[] = {
@@ -237,8 +244,55 @@ int main()
 	glUniformMatrix4fv(viewUniform2, 1, GL_FALSE, glm::value_ptr(view));
 	glUniformMatrix4fv(projUniform2, 1, GL_FALSE, glm::value_ptr(proj));
 
+	// Setup the vegitation vector
+	std::vector<glm::vec3> vegetation;
+	vegetation.push_back(glm::vec3(-1.5f, 0.0f, -0.48f));
+	vegetation.push_back(glm::vec3( 1.5f, 0.0f, 0.51f));
+	vegetation.push_back(glm::vec3( 0.0f, 0.0f, 0.7f));
+	vegetation.push_back(glm::vec3(-0.3f, 0.0f, -2.3f));
+	vegetation.push_back(glm::vec3(0.5f, 0.0f, -0.6f));
+
+#pragma region Plane
+	// Setup Plane Verticies
+
+	/*GLfloat planePoints[] = {
+		// Positions            // Texture Coords (note we set these higher than 1 that together with GL_REPEAT (as texture wrapping mode) will cause the floor texture to repeat)
+		0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
+		-0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
+		-0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
+
+		0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
+		-0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
+		0.5f, 0.5f, 0.0f, 1.0f, 1.0f
+	};*/
+
+	GLfloat planePoints[] =
+	{
+		-0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
+		0.5f, 0.5f, 0.0f, 1.0f, 1.0f,
+		0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
+
+		-0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
+		-0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
+		0.5f, -0.5f, 0.0f, 1.0f, 0.0f
+	};
+#pragma endregion
+
+	// Setup grass VAO
+	GLuint GrassVAO, GrassVBO;
+	glGenVertexArrays(1, &GrassVAO);
+	glGenBuffers(1, &GrassVBO);
+
+	glBindVertexArray(GrassVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, GrassVBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(planePoints), planePoints, GL_STATIC_DRAW);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5.0f * sizeof(GLfloat), (GLvoid*)0);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 5.0f * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+		glEnableVertexAttribArray(2);
+	glBindVertexArray(0);
+
 	glDepthFunc(GL_LESS);
-	//glStencilFunc(GL_EQUAL, 1, 0x00);
 	GLfloat scale = 1.1f;
 	while (!glfwWindowShouldClose(window))
 	{
@@ -267,8 +321,8 @@ int main()
 			// Draw the Boxes
 			model = glm::mat4();
 			model = glm::translate(model, glm::vec3(0.0f, 0.01f, 0.0f));
-			glStencilFunc(GL_ALWAYS, 1, 0xFF);
-			glStencilMask(0xFF);
+			//glStencilFunc(GL_ALWAYS, 1, 0xFF);
+			//glStencilMask(0xFF);
 			glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model));
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 
@@ -278,7 +332,7 @@ int main()
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 
 			// Draw the floor
-			glStencilMask(0x00);
+			//glStencilMask(0x00);
 			model = glm::mat4();
 			model = glm::translate(model, glm::vec3(0.0f, -5.5f, 0.0f));
 			model = glm::scale(model, glm::vec3(10.0f, 10.0f, 10.0f));
@@ -286,7 +340,7 @@ int main()
 			glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model));
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 			
-			model = glm::mat4();
+			model = glm::mat4();/*
 			glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
 			glDisable(GL_DEPTH_TEST);
 			glUseProgram(program2);
@@ -301,7 +355,29 @@ int main()
 			glUniformMatrix4fv(modelUniform2, 1, GL_FALSE, glm::value_ptr(model));
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 			glStencilMask(0xFF);
-			glEnable(GL_DEPTH_TEST);
+			glEnable(GL_DEPTH_TEST);*/
+
+		glBindVertexArray(0);
+
+
+		glBindVertexArray(GrassVAO);
+		glBindTexture(GL_TEXTURE_2D, grassTexture);
+
+		for (int i = 0; i < vegetation.size(); i++)
+		{
+			model = glm::mat4();
+			model = glm::translate(model, vegetation[i]);
+			glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model));
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+			for (int r = 1; r < 6; r++)
+			{
+				model = glm::mat4();
+				model = glm::translate(model, vegetation[i]);
+				model = glm::rotate(model, glm::radians(r * 30.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+				glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model));
+				glDrawArrays(GL_TRIANGLES, 0, 6);
+			}
+		}
 
 		glBindVertexArray(0);
 

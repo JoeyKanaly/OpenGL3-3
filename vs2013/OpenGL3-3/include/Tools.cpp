@@ -5,7 +5,7 @@
 GLuint loadTexture(const char* imagePath)
 {
 	SImage image;
-	image.img = SOIL_load_image(imagePath, &image.width, &image.height, 0, SOIL_LOAD_RGB);
+	image.img = SOIL_load_image(imagePath, &image.width, &image.height, 0, SOIL_LOAD_RGBA);
 	if (image.img == '\0')
 	{
 		std::cout << "Unable to load image at location: " << imagePath << std::endl;
@@ -25,7 +25,7 @@ GLuint loadTexture(const char* imagePath)
 	//glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.width, image.height, 0, GL_RGB, GL_UNSIGNED_BYTE, image.img);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width, image.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.img);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	SOIL_free_image_data(image.img);
 	glBindTexture(GL_TEXTURE_2D, 0);

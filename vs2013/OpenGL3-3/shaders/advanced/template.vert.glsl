@@ -16,5 +16,5 @@ void main()
 	gl_Position = proj * view *  model * vec4(position, 1.0f);
 	//gl_Position = vec4(position, 1.0f);
 //	Normals = normal;
-	TextureCoords = texcoords;
+	TextureCoords = vec2(texcoords.x, 1.0f - texcoords.y);
 }
