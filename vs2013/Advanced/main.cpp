@@ -2,6 +2,7 @@
 #include <iostream>
 #include <algorithm>
 #include <vector>
+#include <map>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <SOIL/SOIL.h>
@@ -96,6 +97,9 @@ GLFWwindow* initWindow()
 		return nullptr;
 	}
 	enableSettings();
+
+	glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
+
 	return window;
 }
 
@@ -158,6 +162,7 @@ int main()
 	GLuint wall = loadTexture("../OpenGL3-3/images/wall.jpg");
 	GLuint container = loadTexture("../OpenGL3-3/images/container.jpg");
 	GLuint grassTexture = loadTexture("../OpenGL3-3/images/grass.png");
+	GLuint windowTexture = loadTexture("../OpenGL3-3/images/window.png");
 
 #pragma region Verts
 	GLfloat verts[] = {
@@ -252,20 +257,15 @@ int main()
 	vegetation.push_back(glm::vec3(-0.3f, 0.0f, -2.3f));
 	vegetation.push_back(glm::vec3(0.5f, 0.0f, -0.6f));
 
+	std::map<GLfloat, glm::vec3> sorted;
+	for (int i = 0; i < vegetation.size(); i++)
+	{
+		GLfloat distance = glm::length(cam.Position - vegetation[i]);
+		sorted[distance] = vegetation[i];
+	}
+
 #pragma region Plane
 	// Setup Plane Verticies
-
-	/*GLfloat planePoints[] = {
-		// Positions            // Texture Coords (note we set these higher than 1 that together with GL_REPEAT (as texture wrapping mode) will cause the floor texture to repeat)
-		0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
-		-0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
-		-0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
-
-		0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
-		-0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
-		0.5f, 0.5f, 0.0f, 1.0f, 1.0f
-	};*/
-
 	GLfloat planePoints[] =
 	{
 		-0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
@@ -359,12 +359,12 @@ int main()
 
 		glBindVertexArray(0);
 
-
 		glBindVertexArray(GrassVAO);
-		glBindTexture(GL_TEXTURE_2D, grassTexture);
+		glBindTexture(GL_TEXTURE_2D, windowTexture);
 
-		for (int i = 0; i < vegetation.size(); i++)
+		for (std::map<GLfloat, glm::vec3>::reverse_iterator it = sorted.rbegin(); it != sorted.rend(); it++)
 		{
+			/*
 			model = glm::mat4();
 			model = glm::translate(model, vegetation[i]);
 			glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model));
@@ -376,7 +376,12 @@ int main()
 				model = glm::rotate(model, glm::radians(r * 30.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 				glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model));
 				glDrawArrays(GL_TRIANGLES, 0, 6);
-			}
+			}*/
+
+			model = glm::mat4();
+			model = glm::translate(model, it->second);
+			glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model));
+			glDrawArrays(GL_TRIANGLES, 0, 6);
 		}
 
 		glBindVertexArray(0);
