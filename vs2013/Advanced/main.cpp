@@ -13,19 +13,27 @@
 #include <Model.h>
 #include <Tools.h>
 
+
+GLuint screenShader;
+
 void keyboard(GLFWwindow* window, int key, int scancode, int action, int mode)
 {
 	Camera* cam = (Camera*)glfwGetWindowUserPointer(window);
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, 1);
-	if (key == GLFW_KEY_SPACE)
-		cam->Position.y += .01f;
+	/*if (key == GLFW_KEY_SPACE)
+		cam->Position.y += .01f;*/
 	if (key == GLFW_KEY_LEFT_SHIFT || key == GLFW_KEY_RIGHT_SHIFT)
 		cam->Position.y -= .01f;
 	if (key == GLFW_KEY_P && action == GLFW_RELEASE)
 		printf("%f, %f, %f", cam->Position.x, cam->Position.y, cam->Position.z);
 	/*if (key == GLFW_KEY_X && action == GLFW_RELEASE)
 		wireframe = !wireframe;*/
+	if (key == GLFW_KEY_SPACE && action == GLFW_RELEASE)
+	{
+		screenShader = compileShaders("../OpenGL3-3/shaders/advanced/fbo.vert.glsl", "../OpenGL3-3/shaders/advanced/fbo.frag.glsl");
+		std::cout << "Recompiled" << std::endl;
+	}
 }
 
 void mouse(GLFWwindow* window, double xpos, double ypos)
@@ -97,7 +105,7 @@ GLFWwindow* initWindow()
 		return nullptr;
 	}
 	enableSettings();
-
+	glCullFace(GL_BACK);
 	glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
 	
 	return window;
@@ -147,10 +155,40 @@ int main()
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
 
+	// Setup a frame buffer
+	GLuint FBO;
+	glGenFramebuffers(1, &FBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+
+	GLuint texture;
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
+
+	GLuint RBO;
+	glGenRenderbuffers(1, &RBO);
+	glBindRenderbuffer(GL_RENDERBUFFER, RBO);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, RBO);
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		std::cout << "Unable to complete the frame buffer specified" << std::endl;
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
 	// Compile the shaders
 	GLuint program = compileShaders("../OpenGL3-3/shaders/advanced/template.vert.glsl", "../OpenGL3-3/shaders/advanced/template.frag.glsl");
 	GLuint program2 = compileShaders("../OpenGL3-3/shaders/advanced/template.vert.glsl", "../OpenGL3-3/shaders/advanced/outline.frag.glsl");
-
+	GLuint screenShader = compileShaders("../OpenGL3-3/shaders/advanced/fbo.vert.glsl", "../OpenGL3-3/shaders/advanced/fbo.frag.glsl");
 	// Initalize and setup camera
 	Camera cam = initCamera();
 	glfwSetWindowUserPointer(window, &cam);
@@ -226,7 +264,7 @@ int main()
 	glm::mat4 model, view, proj;
 	model = glm::mat4();
 	view = cam.GetViewMatrix();
-	proj = glm::perspective(glm::radians(45.0f), (GLfloat)width / (GLfloat)height, 0.1f, 100.0f);
+	proj = glm::perspective(glm::radians(45.0f), (GLfloat)width / (GLfloat)height, 0.1f, 20.0f);
 
 	// Get the uniform locations
 	GLint modelUniform = glGetUniformLocation(program, "model");
@@ -246,6 +284,9 @@ int main()
 	glUniformMatrix4fv(modelUniform2, 1, GL_FALSE, glm::value_ptr(model));
 	glUniformMatrix4fv(viewUniform2, 1, GL_FALSE, glm::value_ptr(view));
 	glUniformMatrix4fv(projUniform2, 1, GL_FALSE, glm::value_ptr(proj));
+
+	glUseProgram(screenShader);
+	glUniform1i(glGetUniformLocation(screenShader, "myTexture"), 0);
 
 	// Setup the vegitation vector
 	std::vector<glm::vec3> vegetation;
@@ -273,10 +314,34 @@ int main()
 
 		0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
 		0.5f, 0.5f, 0.0f, 1.0f, 1.0f,
-
 		-0.5f, 0.5f, 0.0f, 0.0f, 1.0f
 	};
+
+	GLfloat quadVertices[] = {
+		// Positions   // TexCoords
+		-1.0f, 1.0f, 0.0f, 1.0f,
+		-1.0f, -1.0f, 0.0f, 0.0f,
+		1.0f, -1.0f, 1.0f, 0.0f,
+
+		-1.0f, 1.0f, 0.0f, 1.0f,
+		1.0f, -1.0f, 1.0f, 0.0f,
+		1.0f, 1.0f, 1.0f, 1.0f
+	};
 #pragma endregion
+
+	// Setup simple quad VAO
+	GLuint quadVAO, quadVBO;
+	glGenBuffers(1, &quadVBO);
+	glGenVertexArrays(1, &quadVAO);
+
+	glBindVertexArray(quadVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4.0f * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4.0f * sizeof(GLfloat), (GLvoid*)(2 * sizeof(GLfloat)));
+	glEnableVertexAttribArray(1);
+	glBindVertexArray(0);
 
 	// Setup grass VAO
 	GLuint GrassVAO, GrassVBO;
@@ -294,8 +359,10 @@ int main()
 
 	glDepthFunc(GL_LESS);
 	GLfloat scale = 1.1f;
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	while (!glfwWindowShouldClose(window))
 	{
+		glBindFramebuffer(GL_FRAMEBUFFER, FBO);
 		glEnable(GL_DEPTH_TEST);
 		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
@@ -305,7 +372,7 @@ int main()
 		lastFrame = currentFrame;
 
 		glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, container);
@@ -361,7 +428,7 @@ int main()
 
 		glBindVertexArray(GrassVAO);
 		glBindTexture(GL_TEXTURE_2D, windowTexture);
-
+		glDisable(GL_CULL_FACE);
 		for (std::map<GLfloat, glm::vec3>::reverse_iterator it = sorted.rbegin(); it != sorted.rend(); it++)
 		{
 			/*
@@ -383,13 +450,28 @@ int main()
 			glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model));
 			glDrawArrays(GL_TRIANGLES, 0, 6);
 		}
-
+		glEnable(GL_CULL_FACE);
 		glBindVertexArray(0);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		glUseProgram(screenShader);
+		glUniform1f(glGetUniformLocation(screenShader, "time"), glfwGetTime());
+		glBindVertexArray(quadVAO);
+		glDisable(GL_DEPTH_TEST);
+		glBindTexture(GL_TEXTURE_2D, texture);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+		
 
 		glfwSwapBuffers(window);
 
 	}
-
+	glDeleteBuffers(1, &VBO);
+	glDeleteVertexArrays(1, &VAO);
+	glDeleteVertexArrays(1, &GrassVAO);
+	glDeleteFramebuffers(1, &FBO);
 	glfwTerminate();
 	return 0;
 }
