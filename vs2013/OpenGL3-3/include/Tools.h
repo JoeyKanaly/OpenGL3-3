@@ -2,7 +2,9 @@
 #define TOOLS_H
 
 #include <iostream>
+#include <algorithm>
 #include <fstream>
+#include <vector>
 #include <string>
 #include <GL\glew.h>
 #include <GLFW\glfw3.h>
@@ -16,6 +18,7 @@ struct SImage
 };
 
 GLuint loadTexture(const char* imagePath);
+GLuint loadCubemap(const std::vector<const char*>& images);
 GLuint compileShaders(std::string vertex, std::string fragment);
 
 #endif
