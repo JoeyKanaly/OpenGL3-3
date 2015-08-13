@@ -61,6 +61,7 @@ void enableSettings()
 	//glEnable(GL_CULL_FACE);
 	glEnable(GL_STENCIL_TEST);
 	glEnable(GL_BLEND);
+	glEnable(GL_PROGRAM_POINT_SIZE);
 }
 
 GLFWwindow* initWindow()
@@ -184,7 +185,7 @@ int main()
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	// Compile the shaders
-	GLuint program = compileShaders("../OpenGL3-3/shaders/advanced/reflect.vert.glsl", "../OpenGL3-3/shaders/advanced/reflect.frag.glsl");
+	GLuint program = compileShaders("../OpenGL3-3/shaders/advanced/advancedGLSL/points.vert.glsl", "../OpenGL3-3/shaders/basic.frag.glsl");
 	GLuint program2 = compileShaders("../OpenGL3-3/shaders/advanced/template.vert.glsl", "../OpenGL3-3/shaders/advanced/outline.frag.glsl");
 	GLuint screenShader = compileShaders("../OpenGL3-3/shaders/advanced/fbo.vert.glsl", "../OpenGL3-3/shaders/advanced/fbo.frag.glsl");
 	GLuint skyboxShader = compileShaders("../OpenGL3-3/shaders/advanced/cubemap.vert.glsl", "../OpenGL3-3/shaders/advanced/cubemap.frag.glsl");
@@ -461,7 +462,10 @@ int main()
 			//glStencilFunc(GL_ALWAYS, 1, 0xFF);
 			//glStencilMask(0xFF);
 			glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model));
+			glUniform3f(glGetUniformLocation(program, "inColor"), 1.0f, 0.5f, 0.3f);
 			glDrawArrays(GL_TRIANGLES, 0, 36);
+			glUniform3f(glGetUniformLocation(program, "inColor"), 1.0f, 1.0f, 1.0f);
+			glDrawArrays(GL_LINE_LOOP, 0, 36);
 			/*
 			model = glm::mat4();
 			model = glm::translate(model, glm::vec3(1.5f, 0.1f, -1.0f));
