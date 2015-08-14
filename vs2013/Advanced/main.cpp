@@ -185,7 +185,7 @@ int main()
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	// Compile the shaders
-	GLuint program = compileShaders("../OpenGL3-3/shaders/advanced/advancedGLSL/points.vert.glsl", "../OpenGL3-3/shaders/basic.frag.glsl");
+	GLuint program = compileShaders("../OpenGL3-3/shaders/advanced/advancedGLSL/points.vert.glsl", "../OpenGL3-3/shaders/advanced/advancedGLSL/fragVars.frag.glsl");
 	GLuint program2 = compileShaders("../OpenGL3-3/shaders/advanced/template.vert.glsl", "../OpenGL3-3/shaders/advanced/outline.frag.glsl");
 	GLuint screenShader = compileShaders("../OpenGL3-3/shaders/advanced/fbo.vert.glsl", "../OpenGL3-3/shaders/advanced/fbo.frag.glsl");
 	GLuint skyboxShader = compileShaders("../OpenGL3-3/shaders/advanced/cubemap.vert.glsl", "../OpenGL3-3/shaders/advanced/cubemap.frag.glsl");
