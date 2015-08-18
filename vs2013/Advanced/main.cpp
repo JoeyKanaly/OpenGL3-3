@@ -156,6 +156,13 @@ int main()
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
 
+	// Initialize the uniform buffer (UBO)
+	GLuint UBO;
+	glGenBuffers(1, &UBO);
+	glBindBuffer(GL_UNIFORM_BUFFER, UBO);
+	glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), NULL, GL_STATIC_DRAW);
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
 	// Setup a frame buffer
 	GLuint FBO;
 	glGenFramebuffers(1, &FBO);
@@ -185,7 +192,7 @@ int main()
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	// Compile the shaders
-	GLuint program = compileShaders("../OpenGL3-3/shaders/advanced/advancedGLSL/points.vert.glsl", "../OpenGL3-3/shaders/advanced/advancedGLSL/fragVars.frag.glsl");
+	GLuint program = compileShaders("../OpenGL3-3/shaders/advanced/advancedGLSL/ubo.vert.glsl", "../OpenGL3-3/shaders/advanced/outline.frag.glsl");
 	GLuint program2 = compileShaders("../OpenGL3-3/shaders/advanced/template.vert.glsl", "../OpenGL3-3/shaders/advanced/outline.frag.glsl");
 	GLuint screenShader = compileShaders("../OpenGL3-3/shaders/advanced/fbo.vert.glsl", "../OpenGL3-3/shaders/advanced/fbo.frag.glsl");
 	GLuint skyboxShader = compileShaders("../OpenGL3-3/shaders/advanced/cubemap.vert.glsl", "../OpenGL3-3/shaders/advanced/cubemap.frag.glsl");
@@ -328,17 +335,26 @@ int main()
 	GLint viewUniform2 = glGetUniformLocation(program2, "view");
 	GLint projUniform = glGetUniformLocation(program, "proj");
 	GLint projUniform2 = glGetUniformLocation(program2, "proj");
+	GLuint viewProjection = glGetUniformBlockIndex(program, "Matrices");
+	GLuint viewProjection2 = glGetUniformBlockIndex(program2, "Matrices");
 
 	// Setup the initial data for the uniforms
 	glUseProgram(program);
 	glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model));
 	glUniformMatrix4fv(viewUniform, 1, GL_FALSE, glm::value_ptr(view));
 	glUniformMatrix4fv(projUniform, 1, GL_FALSE, glm::value_ptr(proj));
+	glUniformBlockBinding(program, viewProjection, 0);
 
 	glUseProgram(program2);
 	glUniformMatrix4fv(modelUniform2, 1, GL_FALSE, glm::value_ptr(model));
 	glUniformMatrix4fv(viewUniform2, 1, GL_FALSE, glm::value_ptr(view));
 	glUniformMatrix4fv(projUniform2, 1, GL_FALSE, glm::value_ptr(proj));
+	glUniformBlockBinding(program, viewProjection2, 0);
+
+	glBindBufferBase(GL_UNIFORM_BUFFER, 0, UBO);
+	glBindBuffer(GL_UNIFORM_BUFFER, UBO);
+	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(proj));
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 	glUseProgram(screenShader);
 	glUniform1i(glGetUniformLocation(screenShader, "myTexture"), 0);
@@ -448,10 +464,15 @@ int main()
 		view = cam.GetViewMatrix();
 		handleMovement(window, deltaTime);
 		glUseProgram(program);
-		//glUniform1i(glGetUniformLocation(program, "skybox"), 0);
+
+
+		glBindBuffer(GL_UNIFORM_BUFFER, UBO);
+		glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(view));
+		glBindBuffer(GL_UNIFORM_BUFFER, 0);
+		glUniform1i(glGetUniformLocation(program, "skybox"), 0);
 		glUniform3f(glGetUniformLocation(program, "cameraPos"), cam.Position.x, cam.Position.y, cam.Position.z);
 		
-		glUniformMatrix4fv(viewUniform, 1, GL_FALSE, glm::value_ptr(view));
+		//glUniformMatrix4fv(viewUniform, 1, GL_FALSE, glm::value_ptr(view));
 
 		glBindVertexArray(VAO);
 			
@@ -464,8 +485,8 @@ int main()
 			glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model));
 			glUniform3f(glGetUniformLocation(program, "inColor"), 1.0f, 0.5f, 0.3f);
 			glDrawArrays(GL_TRIANGLES, 0, 36);
-			glUniform3f(glGetUniformLocation(program, "inColor"), 1.0f, 1.0f, 1.0f);
-			glDrawArrays(GL_LINE_LOOP, 0, 36);
+			//glUniform3f(glGetUniformLocation(program, "inColor"), 1.0f, 1.0f, 1.0f);
+			//glDrawArrays(GL_LINE_LOOP, 0, 36);
 			/*
 			model = glm::mat4();
 			model = glm::translate(model, glm::vec3(1.5f, 0.1f, -1.0f));
