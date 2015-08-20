@@ -20,5 +20,6 @@ struct SImage
 GLuint loadTexture(const char* imagePath);
 GLuint loadCubemap(const std::vector<const char*>& images);
 GLuint compileShaders(std::string vertex, std::string fragment);
+GLuint compileShaders(std::string vertex, std::string fragment, std::string geometry);
 
 #endif

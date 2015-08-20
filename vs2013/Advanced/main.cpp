@@ -156,6 +156,12 @@ int main()
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
 
+	// Point VAO and VBO
+	GLuint pointVAO, pointVBO;
+	glGenVertexArrays(1, &pointVAO);
+	glGenBuffers(1, &pointVBO);
+
+
 	// Initialize the uniform buffer (UBO)
 	GLuint UBO;
 	glGenBuffers(1, &UBO);
@@ -197,6 +203,9 @@ int main()
 	GLuint screenShader = compileShaders("../OpenGL3-3/shaders/advanced/fbo.vert.glsl", "../OpenGL3-3/shaders/advanced/fbo.frag.glsl");
 	GLuint skyboxShader = compileShaders("../OpenGL3-3/shaders/advanced/cubemap.vert.glsl", "../OpenGL3-3/shaders/advanced/cubemap.frag.glsl");
 
+	GLuint geomProgram = compileShaders("../OpenGL3-3/shaders/advanced/geom/simple.vert.glsl", "../OpenGL3-3/shaders/advanced/geom/simple.frag.glsl",
+										"../OpenGL3-3/shaders/advanced/geom/simple.geom.glsl");
+
 	// Initalize and setup camera
 	Camera cam = initCamera();
 	glfwSetWindowUserPointer(window, &cam);
@@ -221,6 +230,12 @@ int main()
 	GLuint cubemap = loadCubemap(faces);
 
 #pragma region Verts
+	GLfloat points[] = {
+		-0.5f, 0.5f, // Top-left
+		0.5f, 0.5f, // Top-right
+		0.5f, -0.5f, // Bottom-right
+		-0.5f, -0.5f  // Bottom-left
+	};
 	GLfloat skyboxVertices[] = {
 		// Positions          
 		-1.0f, 1.0f, -1.0f,
@@ -320,6 +335,13 @@ int main()
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
 		glEnableVertexAttribArray(1);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
+	glBindVertexArray(pointVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, pointVBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(points), points, GL_STATIC_DRAW);
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), (GLvoid*)0);
+		glEnableVertexAttribArray(0);
 	glBindVertexArray(0);
 
 	// Setup the Model, View, and Projection matrices
@@ -458,7 +480,7 @@ int main()
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
-		glActiveTexture(GL_TEXTURE0);
+		/*glActiveTexture(GL_TEXTURE0);
 		//glBindTexture(GL_TEXTURE_2D, container);
 
 		view = cam.GetViewMatrix();
@@ -519,7 +541,7 @@ int main()
 			glStencilMask(0xFF);
 			glEnable(GL_DEPTH_TEST);*/
 
-		glBindVertexArray(0);
+		//glBindVertexArray(0);
 
 		/*glBindVertexArray(GrassVAO);
 		glBindTexture(GL_TEXTURE_2D, windowTexture);
@@ -547,6 +569,13 @@ int main()
 		}
 		glEnable(GL_CULL_FACE);
 		glBindVertexArray(0);*/
+
+		// Draw the points
+		glUseProgram(geomProgram);
+		glBindVertexArray(pointVAO);
+			glDrawArrays(GL_POINTS, 0, 4);
+		glBindVertexArray(0);
+
 		glDepthMask(GL_FALSE);
 		view = glm::mat4(glm::mat3(cam.GetViewMatrix()));
 		glUseProgram(skyboxShader);
