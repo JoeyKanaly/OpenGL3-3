@@ -203,8 +203,8 @@ int main()
 	GLuint screenShader = compileShaders("../OpenGL3-3/shaders/advanced/fbo.vert.glsl", "../OpenGL3-3/shaders/advanced/fbo.frag.glsl");
 	GLuint skyboxShader = compileShaders("../OpenGL3-3/shaders/advanced/cubemap.vert.glsl", "../OpenGL3-3/shaders/advanced/cubemap.frag.glsl");
 
-	GLuint geomProgram = compileShaders("../OpenGL3-3/shaders/advanced/geom/simple.vert.glsl", "../OpenGL3-3/shaders/advanced/geom/simple.frag.glsl",
-										"../OpenGL3-3/shaders/advanced/geom/simple.geom.glsl");
+	GLuint geomProgram = compileShaders("../OpenGL3-3/shaders/advanced/geom/simple.vert.glsl", "../OpenGL3-3/shaders/advanced/geom/house.frag.glsl",
+										"../OpenGL3-3/shaders/advanced/geom/house.geom.glsl");
 
 	// Initalize and setup camera
 	Camera cam = initCamera();
@@ -231,10 +231,10 @@ int main()
 
 #pragma region Verts
 	GLfloat points[] = {
-		-0.5f, 0.5f, // Top-left
-		0.5f, 0.5f, // Top-right
-		0.5f, -0.5f, // Bottom-right
-		-0.5f, -0.5f  // Bottom-left
+		-0.5f, 0.5f, 1.0f, 0.0f, 0.0f, // Top-left
+		0.5f, 0.5f, 0.0f, 1.0f, 0.0f, // Top-right
+		0.5f, -0.5f, 0.0f, 0.0f, 1.0f, // Bottom-right
+		-0.5f, -0.5f, 1.0f, 1.0f, 0.0f  // Bottom-left
 	};
 	GLfloat skyboxVertices[] = {
 		// Positions          
@@ -340,8 +340,10 @@ int main()
 	glBindVertexArray(pointVAO);
 		glBindBuffer(GL_ARRAY_BUFFER, pointVBO);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(points), points, GL_STATIC_DRAW);
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), (GLvoid*)0);
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)0);
 		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(2 * sizeof(GLfloat)));
+		glEnableVertexAttribArray(1);
 	glBindVertexArray(0);
 
 	// Setup the Model, View, and Projection matrices
@@ -467,7 +469,7 @@ int main()
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	while (!glfwWindowShouldClose(window))
 	{
-		glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+		//glBindFramebuffer(GL_FRAMEBUFFER, FBO);
 		glEnable(GL_DEPTH_TEST);
 		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
@@ -586,7 +588,7 @@ int main()
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 		glBindVertexArray(0);
 		glDepthMask(GL_TRUE);
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		/*glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
@@ -596,7 +598,7 @@ int main()
 		glDisable(GL_DEPTH_TEST);
 		glBindTexture(GL_TEXTURE_2D, texture);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
-		glBindVertexArray(0);
+		glBindVertexArray(0);*/
 		
 
 		glfwSwapBuffers(window);
