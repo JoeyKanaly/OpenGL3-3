@@ -58,10 +58,10 @@ void scroll(GLFWwindow* window, double xOff, double yOff)
 void enableSettings()
 {
 	glEnable(GL_DEPTH_TEST);
-	//glEnable(GL_CULL_FACE);
-	glEnable(GL_STENCIL_TEST);
-	glEnable(GL_BLEND);
-	glEnable(GL_PROGRAM_POINT_SIZE);
+	glEnable(GL_CULL_FACE);
+	//glEnable(GL_STENCIL_TEST);
+	//glEnable(GL_BLEND);
+	//glEnable(GL_PROGRAM_POINT_SIZE);
 }
 
 GLFWwindow* initWindow()
@@ -106,8 +106,8 @@ GLFWwindow* initWindow()
 		return nullptr;
 	}
 	enableSettings();
-	glCullFace(GL_BACK);
-	glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
+	/*glCullFace(GL_BACK);
+	glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);*/
 	glDepthFunc(GL_LEQUAL);
 	return window;
 }
@@ -202,7 +202,13 @@ int main()
 	GLuint program2 = compileShaders("../OpenGL3-3/shaders/advanced/template.vert.glsl", "../OpenGL3-3/shaders/advanced/outline.frag.glsl");
 	GLuint screenShader = compileShaders("../OpenGL3-3/shaders/advanced/fbo.vert.glsl", "../OpenGL3-3/shaders/advanced/fbo.frag.glsl");
 	GLuint skyboxShader = compileShaders("../OpenGL3-3/shaders/advanced/cubemap.vert.glsl", "../OpenGL3-3/shaders/advanced/cubemap.frag.glsl");
+	
+	GLuint modelProgram = compileShaders("../OpenGL3-3/shaders/advanced/geom/model.vert.glsl", "../OpenGL3-3/shaders/advanced/geom/model.frag.glsl");/*,
+										 "../OpenGL3-3/shaders/advanced/geom/model.geom.glsl");*/
 
+	GLuint normalsProgram = compileShaders("../OpenGL3-3/shaders/advanced/geom/normals.vert.glsl", "../OpenGL3-3/shaders/advanced/geom/normals.frag.glsl",
+										   "../OpenGL3-3/shaders/advanced/geom/normals.geom.glsl");
+	
 	GLuint geomProgram = compileShaders("../OpenGL3-3/shaders/advanced/geom/simple.vert.glsl", "../OpenGL3-3/shaders/advanced/geom/house.frag.glsl",
 										"../OpenGL3-3/shaders/advanced/geom/house.geom.glsl");
 
@@ -211,7 +217,7 @@ int main()
 	glfwSetWindowUserPointer(window, &cam);
 
 	// Load any models here
-	//Model someModel = Model("../Model/models/");
+	Model someModel = Model("../Model/models/nanosuit/nanosuit.obj");
 
 	// Load any textures to be used
 	GLuint wall = loadTexture("../OpenGL3-3/images/wall.jpg");
@@ -471,7 +477,7 @@ int main()
 	{
 		//glBindFramebuffer(GL_FRAMEBUFFER, FBO);
 		glEnable(GL_DEPTH_TEST);
-		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+		//glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
 		glfwPollEvents();
 		currentFrame = glfwGetTime();
@@ -481,52 +487,75 @@ int main()
 		glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		// Draw the points
+		/*glUseProgram(geomProgram);
+		glBindVertexArray(pointVAO);
+			glDrawArrays(GL_POINTS, 0, 4);
+		glBindVertexArray(0);*/
 
-		/*glActiveTexture(GL_TEXTURE0);
-		//glBindTexture(GL_TEXTURE_2D, container);
-
+		glUseProgram(modelProgram);
 		view = cam.GetViewMatrix();
+		model = glm::mat4();
+		glUniformMatrix4fv(glGetUniformLocation(modelProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
+		glUniformMatrix4fv(glGetUniformLocation(modelProgram, "view"), 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(glGetUniformLocation(modelProgram, "proj"), 1, GL_FALSE, glm::value_ptr(proj));
+		glUniform1f(glGetUniformLocation(modelProgram, "time"), glfwGetTime());
+		someModel.draw(modelProgram);
+
+		glUseProgram(normalsProgram);
+		
+		model = glm::mat4();
+		glUniformMatrix4fv(glGetUniformLocation(normalsProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
+		glUniformMatrix4fv(glGetUniformLocation(normalsProgram, "view"), 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(glGetUniformLocation(normalsProgram, "projection"), 1, GL_FALSE, glm::value_ptr(proj));
+		glUniform1f(glGetUniformLocation(normalsProgram, "time"), glfwGetTime());
+		someModel.draw(normalsProgram);
+
 		handleMovement(window, deltaTime);
+		/*glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, container);
+		
+		view = cam.GetViewMatrix();
 		glUseProgram(program);
 
-
+		
 		glBindBuffer(GL_UNIFORM_BUFFER, UBO);
 		glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(view));
 		glBindBuffer(GL_UNIFORM_BUFFER, 0);
 		glUniform1i(glGetUniformLocation(program, "skybox"), 0);
 		glUniform3f(glGetUniformLocation(program, "cameraPos"), cam.Position.x, cam.Position.y, cam.Position.z);
 		
-		//glUniformMatrix4fv(viewUniform, 1, GL_FALSE, glm::value_ptr(view));
-
+		glUniformMatrix4fv(viewUniform, 1, GL_FALSE, glm::value_ptr(view));
+		
 		glBindVertexArray(VAO);
 			
 		glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap);
 			// Draw the Boxes
 			model = glm::mat4();
 			model = glm::translate(model, glm::vec3(0.0f, 0.01f, 0.0f));
-			//glStencilFunc(GL_ALWAYS, 1, 0xFF);
-			//glStencilMask(0xFF);
+			glStencilFunc(GL_ALWAYS, 1, 0xFF);
+			glStencilMask(0xFF);
 			glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model));
 			glUniform3f(glGetUniformLocation(program, "inColor"), 1.0f, 0.5f, 0.3f);
 			glDrawArrays(GL_TRIANGLES, 0, 36);
-			//glUniform3f(glGetUniformLocation(program, "inColor"), 1.0f, 1.0f, 1.0f);
-			//glDrawArrays(GL_LINE_LOOP, 0, 36);
-			/*
+			glUniform3f(glGetUniformLocation(program, "inColor"), 1.0f, 1.0f, 1.0f);
+			glDrawArrays(GL_LINE_LOOP, 0, 36);
+			
 			model = glm::mat4();
 			model = glm::translate(model, glm::vec3(1.5f, 0.1f, -1.0f));
 			glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model));
-			glDrawArrays(GL_TRIANGLES, 0, 36);*/
+			glDrawArrays(GL_TRIANGLES, 0, 36);
 
 			// Draw the floor
-			//glStencilMask(0x00);
-			/*model = glm::mat4();
+			glStencilMask(0x00);
+			model = glm::mat4();
 			model = glm::translate(model, glm::vec3(0.0f, -5.5f, 0.0f));
 			model = glm::scale(model, glm::vec3(10.0f, 10.0f, 10.0f));
 			glBindTexture(GL_TEXTURE_2D, wall);
 			glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model));
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 			
-			model = glm::mat4();*//*
+			model = glm::mat4();
 			glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
 			glDisable(GL_DEPTH_TEST);
 			glUseProgram(program2);
@@ -541,11 +570,11 @@ int main()
 			glUniformMatrix4fv(modelUniform2, 1, GL_FALSE, glm::value_ptr(model));
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 			glStencilMask(0xFF);
-			glEnable(GL_DEPTH_TEST);*/
+			glEnable(GL_DEPTH_TEST);
 
-		//glBindVertexArray(0);
+		glBindVertexArray(0);
 
-		/*glBindVertexArray(GrassVAO);
+		glBindVertexArray(GrassVAO);
 		glBindTexture(GL_TEXTURE_2D, windowTexture);
 		glDisable(GL_CULL_FACE);
 		for (std::map<GLfloat, glm::vec3>::reverse_iterator it = sorted.rbegin(); it != sorted.rend(); it++)
@@ -570,14 +599,9 @@ int main()
 			glDrawArrays(GL_TRIANGLES, 0, 6);
 		}
 		glEnable(GL_CULL_FACE);
-		glBindVertexArray(0);*/
-
-		// Draw the points
-		glUseProgram(geomProgram);
-		glBindVertexArray(pointVAO);
-			glDrawArrays(GL_POINTS, 0, 4);
 		glBindVertexArray(0);
 
+		*/
 		glDepthMask(GL_FALSE);
 		view = glm::mat4(glm::mat3(cam.GetViewMatrix()));
 		glUseProgram(skyboxShader);
@@ -588,7 +612,8 @@ int main()
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 		glBindVertexArray(0);
 		glDepthMask(GL_TRUE);
-		/*glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		/*
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 

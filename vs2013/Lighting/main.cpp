@@ -59,7 +59,7 @@ GLFWwindow* initWindow()
 
 	//More window options
 	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
-	//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glfwSetWindowPos(window, 500, 100);
 
 	//Setup all the callback functions
