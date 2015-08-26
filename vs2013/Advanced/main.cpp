@@ -15,24 +15,25 @@
 
 
 GLuint screenShader;
+bool drawNormals = false;
+bool wireframe = false;
 
 void keyboard(GLFWwindow* window, int key, int scancode, int action, int mode)
 {
 	Camera* cam = (Camera*)glfwGetWindowUserPointer(window);
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, 1);
-	/*if (key == GLFW_KEY_SPACE)
-		cam->Position.y += .01f;*/
+	if (key == GLFW_KEY_SPACE)
+		cam->Position.y += .01f;
 	if (key == GLFW_KEY_LEFT_SHIFT || key == GLFW_KEY_RIGHT_SHIFT)
 		cam->Position.y -= .01f;
 	if (key == GLFW_KEY_P && action == GLFW_RELEASE)
 		printf("%f, %f, %f", cam->Position.x, cam->Position.y, cam->Position.z);
-	/*if (key == GLFW_KEY_X && action == GLFW_RELEASE)
-		wireframe = !wireframe;*/
-	if (key == GLFW_KEY_SPACE && action == GLFW_RELEASE)
+	if (key == GLFW_KEY_X && action == GLFW_RELEASE)
+		wireframe = !wireframe;
+	if (key == GLFW_KEY_N && action == GLFW_PRESS)
 	{
-		screenShader = compileShaders("../OpenGL3-3/shaders/advanced/fbo.vert.glsl", "../OpenGL3-3/shaders/advanced/fbo.frag.glsl");
-		std::cout << "Recompiled" << std::endl;
+		drawNormals = !drawNormals;
 	}
 }
 
@@ -59,8 +60,8 @@ void enableSettings()
 {
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
-	//glEnable(GL_STENCIL_TEST);
-	//glEnable(GL_BLEND);
+	glEnable(GL_STENCIL_TEST);
+	glEnable(GL_BLEND);
 	//glEnable(GL_PROGRAM_POINT_SIZE);
 }
 
@@ -106,8 +107,8 @@ GLFWwindow* initWindow()
 		return nullptr;
 	}
 	enableSettings();
-	/*glCullFace(GL_BACK);
-	glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);*/
+	glCullFace(GL_BACK);
+	//glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);*/
 	glDepthFunc(GL_LEQUAL);
 	return window;
 }
@@ -138,7 +139,7 @@ int main()
 	GLFWwindow* window = initWindow();
 	if (window == nullptr)
 	{
-		std::cout << "Unable to initalize window." << std::endl;
+		std::cout << "Unable to initialize window." << std::endl;
 		return -1;
 	}
 
@@ -151,7 +152,8 @@ int main()
 	int width = 800, height = 600;
 	glViewport(0, 0, width, height);
 
-	// Initalize the VAO and VBO
+	// Initialize the VAO and VBO
+	// This is so messy
 	GLuint VAO, VBO;
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
@@ -163,6 +165,7 @@ int main()
 
 
 	// Initialize the uniform buffer (UBO)
+	
 	GLuint UBO;
 	glGenBuffers(1, &UBO);
 	glBindBuffer(GL_UNIFORM_BUFFER, UBO);
@@ -490,27 +493,39 @@ int main()
 		// Draw the points
 		/*glUseProgram(geomProgram);
 		glBindVertexArray(pointVAO);
-			glDrawArrays(GL_POINTS, 0, 4);
+		glDrawArrays(GL_POINTS, 0, 4);
 		glBindVertexArray(0);*/
 
 		glUseProgram(modelProgram);
 		view = cam.GetViewMatrix();
 		model = glm::mat4();
+		
+
+		model = glm::scale(model, glm::vec3(0.5f));
 		glUniformMatrix4fv(glGetUniformLocation(modelProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
 		glUniformMatrix4fv(glGetUniformLocation(modelProgram, "view"), 1, GL_FALSE, glm::value_ptr(view));
 		glUniformMatrix4fv(glGetUniformLocation(modelProgram, "proj"), 1, GL_FALSE, glm::value_ptr(proj));
 		glUniform1f(glGetUniformLocation(modelProgram, "time"), glfwGetTime());
 		someModel.draw(modelProgram);
 
-		glUseProgram(normalsProgram);
-		
-		model = glm::mat4();
-		glUniformMatrix4fv(glGetUniformLocation(normalsProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
-		glUniformMatrix4fv(glGetUniformLocation(normalsProgram, "view"), 1, GL_FALSE, glm::value_ptr(view));
-		glUniformMatrix4fv(glGetUniformLocation(normalsProgram, "projection"), 1, GL_FALSE, glm::value_ptr(proj));
-		glUniform1f(glGetUniformLocation(normalsProgram, "time"), glfwGetTime());
-		someModel.draw(normalsProgram);
+		if (drawNormals)
+		{
+			glUseProgram(normalsProgram);
 
+			glUniformMatrix4fv(glGetUniformLocation(normalsProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
+			glUniformMatrix4fv(glGetUniformLocation(normalsProgram, "view"), 1, GL_FALSE, glm::value_ptr(view));
+			glUniformMatrix4fv(glGetUniformLocation(normalsProgram, "projection"), 1, GL_FALSE, glm::value_ptr(proj));
+			glUniform1f(glGetUniformLocation(normalsProgram, "time"), glfwGetTime());
+			someModel.draw(normalsProgram);
+		}
+		if (wireframe)
+		{
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		}
+		else
+		{
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		}
 		handleMovement(window, deltaTime);
 		/*glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, container);
@@ -623,8 +638,8 @@ int main()
 		glDisable(GL_DEPTH_TEST);
 		glBindTexture(GL_TEXTURE_2D, texture);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
-		glBindVertexArray(0);*/
-		
+		glBindVertexArray(0);
+		*/
 
 		glfwSwapBuffers(window);
 
