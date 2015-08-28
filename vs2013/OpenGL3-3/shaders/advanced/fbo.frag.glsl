@@ -11,7 +11,7 @@ const float offset = 1.0f / 300.0f;
 
 void main()
 {
-/*	vec2 offsets[9] = vec2[](
+	vec2 offsets[9] = vec2[](
 		vec2(-offset, offset),
 		vec2(0.0f, offset),
 		vec2(offset, offset),
@@ -53,8 +53,8 @@ void main()
 		col += sampleTex[i] * kernel[i];
 
 	color = vec4(col, 1.0f);
-*/
-	color = texture(myTexture, texCoords);
+
+	//color = texture(myTexture, texCoords);
 	//float average = (color.r + color.g + color.b) / 3.0f;
 	//color = vec4(average, average, average, 1.0f);
 }
