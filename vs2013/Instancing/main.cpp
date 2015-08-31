@@ -44,7 +44,7 @@ int main()
 	glViewport(0, 0, width, height);
 
 	// Setup Camera
-	Camera cam = Camera();
+	Camera cam = initCamera();
 	glfwSetWindowUserPointer(window, &cam);
 
 	Model planet = Model("./Models/planet/planet.obj");
@@ -55,7 +55,7 @@ int main()
 	// Setup MVP model
 	glm::mat4 model, view, proj;
 	view = cam.GetViewMatrix();
-	proj = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 100.0f);
+	proj = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 10000.0f);
 
 #pragma region quad
 
@@ -131,8 +131,8 @@ int main()
 		modelMats[i] = model;
 	}
 
-	glUniformMatrix4fv(glGetUniformLocation(modelShader, "view"), 1, GL_FALSE, glm::value_ptr(view));
-	glUniformMatrix4fv(glGetUniformLocation(modelShader, "proj"), 1, GL_FALSE, glm::value_ptr(proj));
+	glUseProgram(modelShader);
+	glUniformMatrix4fv(glGetUniformLocation(modelShader, "projection"), 1, GL_FALSE, glm::value_ptr(proj));
 
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	while (!glfwWindowShouldClose(window))
@@ -147,8 +147,7 @@ int main()
 		handleMovement(window, deltaTime);
 
 		glUseProgram(modelShader);
-		view = cam.GetViewMatrix();
-		glUniformMatrix4fv(glGetUniformLocation(modelShader, "view"), 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(glGetUniformLocation(modelShader, "view"), 1, GL_FALSE, glm::value_ptr(cam.GetViewMatrix()));
 
 		glm::mat4 model;
 		model = glm::translate(model, glm::vec3(0.0f, -5.0f, 0.0f));
@@ -269,7 +268,7 @@ GLFWwindow* initWindow()
 
 Camera initCamera()
 {
-	Camera cam = Camera(glm::vec3(0.0f, 0.0f, 3.0f));
+	Camera cam = Camera(glm::vec3(0.0f, 0.0f, 55.0f));
 	//cam.MovementSpeed = 100.0f;
 	return cam;
 }
