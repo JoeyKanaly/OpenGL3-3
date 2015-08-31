@@ -16,6 +16,161 @@
 
 GLuint screenShader;
 
+void keyboard(GLFWwindow* window, int key, int scancode, int action, int mode);
+void mouse(GLFWwindow* window, double xpos, double ypos);
+void mouseButtons(GLFWwindow* window, int button, int action, int mods);
+void scroll(GLFWwindow* window, double xOff, double yOff);
+void enableSettings();
+GLFWwindow* initWindow();
+Camera initCamera();
+void handleMovement(GLFWwindow* window, GLfloat deltaTime);
+
+int main()
+{
+	GLFWwindow* window = initWindow();
+	if (window == nullptr)
+	{
+		std::cout << "Unable to initialize window." << std::endl;
+		return -1;
+	}
+
+	// Start the timer
+	GLfloat deltaTime, lastFrame, currentFrame;
+	lastFrame = 0.0f;
+	currentFrame = 0.0f;
+
+	// Setup the viewport;
+	GLfloat width = 800, height = 600;
+	glViewport(0, 0, width, height);
+
+	// Setup Camera
+	Camera cam = Camera();
+	glfwSetWindowUserPointer(window, &cam);
+
+	Model planet = Model("./Models/planet/planet.obj");
+	Model asteroid = Model("./Models/rock/rock.obj");
+
+	GLuint program = compileShaders("../OpenGL3-3/shaders/advanced/instance/basic.vert.glsl", "../OpenGL3-3/shaders/advanced/instance/basic.frag.glsl");
+	GLuint modelShader = compileShaders("../OpenGL3-3/shaders/newModel/model.vert.glsl", "../OpenGL3-3/shaders/newModel/model.frag.glsl");
+	// Setup MVP model
+	glm::mat4 model, view, proj;
+	view = cam.GetViewMatrix();
+	proj = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 100.0f);
+
+#pragma region quad
+
+	GLfloat quadVertices[] = {
+		// Positions     // Colors
+		-0.05f, 0.05f, 1.0f, 0.0f, 0.0f,
+		0.05f, -0.05f, 0.0f, 1.0f, 0.0f,
+		-0.05f, -0.05f, 0.0f, 0.0f, 1.0f,
+
+		-0.05f, 0.05f, 1.0f, 0.0f, 0.0f,
+		0.05f, -0.05f, 0.0f, 1.0f, 0.0f,
+		0.05f, 0.05f, 0.0f, 1.0f, 1.0f
+	};
+
+	glm::vec2 translations[100];
+	int index = 0;
+	GLfloat offset = 0.1f;
+	for (GLint y = -10; y < 10; y += 2)
+	{
+		for (GLint x = -10; x < 10; x += 2)
+		{
+			glm::vec2 translation;
+			translation.x = (GLfloat)x / 10.0f + offset;
+			translation.y = (GLfloat)y / 10.0f + offset;
+			translations[index++] = translation;
+		}
+	}
+
+#pragma endregion
+
+	GLuint VBO, VAO, instanceVBO;
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
+	glGenBuffers(1, &instanceVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * 100, &translations[0], GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	glBindVertexArray(VAO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 5, (GLvoid*)0);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 5, (GLvoid*)(sizeof(GLfloat) * 2));
+	glEnableVertexAttribArray(2);
+	glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), (GLvoid*)0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glVertexAttribDivisor(2, 1);
+	glBindVertexArray(0);
+
+	const int amount = 1000;
+	glm::mat4 modelMats[amount];
+	srand(glfwGetTime());
+	GLfloat radius = 50.0f;
+	offset = 2.5f;
+	for (GLuint i = 0; i < amount; i++)
+	{
+		glm::mat4 model;
+		GLfloat angle = (GLfloat)i / (GLfloat)amount * 360.0f;
+		GLfloat displacement = (rand() % (GLint)(2 * offset)) / 100.0f - offset;
+		GLfloat x = sin(angle) * radius + displacement;
+		displacement = (rand() % (GLint)(2 * offset * 100)) / 100.0f - offset;
+		GLfloat y = displacement * 0.4f;
+		displacement = (rand() % (GLint)(2 * offset * 100)) / 100.0f - offset;
+		GLfloat z = cos(angle) * radius + displacement;
+		model = glm::translate(model, glm::vec3(x, y, z));
+		GLfloat scale = (rand() % 20) / 100.0f + 0.05f;
+		model = glm::scale(model, glm::vec3(scale));
+		GLfloat rotAngle = (rand() % 360);
+		model = glm::rotate(model, rotAngle, glm::vec3(0.4f, 0.6f, 0.8f));
+		modelMats[i] = model;
+	}
+
+	glUniformMatrix4fv(glGetUniformLocation(modelShader, "view"), 1, GL_FALSE, glm::value_ptr(view));
+	glUniformMatrix4fv(glGetUniformLocation(modelShader, "proj"), 1, GL_FALSE, glm::value_ptr(proj));
+
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	while (!glfwWindowShouldClose(window))
+	{
+		glfwPollEvents();
+		currentFrame = glfwGetTime();
+		deltaTime = currentFrame - lastFrame;
+		lastFrame = currentFrame;
+
+		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		handleMovement(window, deltaTime);
+
+		glUseProgram(modelShader);
+		view = cam.GetViewMatrix();
+		glUniformMatrix4fv(glGetUniformLocation(modelShader, "view"), 1, GL_FALSE, glm::value_ptr(view));
+
+		glm::mat4 model;
+		model = glm::translate(model, glm::vec3(0.0f, -5.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(4.0f));
+		glUniformMatrix4fv(glGetUniformLocation(modelShader, "model"), 1, GL_FALSE, glm::value_ptr(model));
+		planet.draw(modelShader);
+
+		for (int i = 0; i < amount; i++)
+		{
+			glUniformMatrix4fv(glGetUniformLocation(modelShader, "model"), 1, GL_FALSE, glm::value_ptr(modelMats[i]));
+			asteroid.draw(modelShader);
+		}
+
+		glfwSwapBuffers(window);
+
+	}
+	glfwTerminate();
+	return 0;
+}
+
+
+
 void keyboard(GLFWwindow* window, int key, int scancode, int action, int mode)
 {
 	Camera* cam = (Camera*)glfwGetWindowUserPointer(window);
@@ -131,110 +286,4 @@ void handleMovement(GLFWwindow* window, GLfloat deltaTime)
 		camera->ProcessKeyboard(LEFT, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_D))
 		camera->ProcessKeyboard(RIGHT, deltaTime);
-}
-
-int main()
-{
-	GLFWwindow* window = initWindow();
-	if (window == nullptr)
-	{
-		std::cout << "Unable to initalize window." << std::endl;
-		return -1;
-	}
-
-	// Start the timer
-	GLfloat deltaTime, lastFrame, currentFrame;
-	lastFrame = 0.0f;
-	currentFrame = 0.0f;
-
-	// Setup the viewport;
-	GLfloat width = 800, height = 600;
-	glViewport(0, 0, width, height);
-
-	// Setup Camera
-	Camera cam = Camera();
-	glfwSetWindowUserPointer(window, &cam);
-
-	GLuint program = compileShaders("../OpenGL3-3/shaders/advanced/instance/basic.vert.glsl", "../OpenGL3-3/shaders/advanced/instance/basic.frag.glsl");
-
-	// Setup MVP model
-	glm::mat4 model, view, proj;
-	//view = cam.GetViewMatrix();
-	//proj = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 100.0f);
-	
-	proj = glm::ortho(0.0f, width, height, 0.0f, -1.0f, 1.0f);
-
-#pragma region quad
-
-	GLfloat quadVertices[] = {
-		// Positions     // Colors
-		-0.05f, 0.05f, 1.0f, 0.0f, 0.0f,
-		0.05f, -0.05f, 0.0f, 1.0f, 0.0f,
-		-0.05f, -0.05f, 0.0f, 0.0f, 1.0f,
-
-		-0.05f, 0.05f, 1.0f, 0.0f, 0.0f,
-		0.05f, -0.05f, 0.0f, 1.0f, 0.0f,
-		0.05f, 0.05f, 0.0f, 1.0f, 1.0f
-	};
-
-	glm::vec2 translations[100];
-	int index = 0;
-	GLfloat offset = 0.1f;
-	for (GLint y = -10; y < 10; y += 2)
-	{
-		for (GLint x = -10; x < 10; x += 2)
-		{
-			glm::vec2 translation;
-			translation.x = (GLfloat)x / 10.0f + offset;
-			translation.y = (GLfloat)y / 10.0f + offset;
-			translations[index++] = translation;
-		}
-	}
-
-#pragma endregion
-
-	GLuint VBO, VAO, instanceVBO;
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
-	glGenBuffers(1, &instanceVBO);
-	glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * 100, &translations[0], GL_STATIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-	glBindVertexArray(VAO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 5, (GLvoid*)0);
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 5, (GLvoid*)(sizeof(GLfloat) * 2));
-	glEnableVertexAttribArray(2);
-	glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), (GLvoid*)0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glVertexAttribDivisor(2, 1);
-	glBindVertexArray(0);
-
-
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	while (!glfwWindowShouldClose(window))
-	{
-		glfwPollEvents();
-		currentFrame = glfwGetTime();
-		deltaTime = currentFrame - lastFrame;
-		lastFrame = currentFrame;
-
-		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		glUseProgram(program);
-		glBindVertexArray(VAO);
-			glDrawArraysInstanced(GL_TRIANGLES, 0, 6, 100);
-		glBindVertexArray(0);
-
-		glfwSwapBuffers(window);
-
-	}
-	glfwTerminate();
-	return 0;
 }
