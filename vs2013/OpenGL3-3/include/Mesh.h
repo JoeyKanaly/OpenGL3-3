@@ -34,8 +34,8 @@ public:
 	std::vector<Texture> textures;
 	Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices, std::vector<Texture> textures);
 	void draw(GLuint program);
-private:
 	GLuint VAO, VBO, EBO;
+private:
 	void setupMesh();
 };
 

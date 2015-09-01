@@ -52,6 +52,7 @@ int main()
 
 	GLuint program = compileShaders("../OpenGL3-3/shaders/advanced/instance/basic.vert.glsl", "../OpenGL3-3/shaders/advanced/instance/basic.frag.glsl");
 	GLuint modelShader = compileShaders("../OpenGL3-3/shaders/newModel/model.vert.glsl", "../OpenGL3-3/shaders/newModel/model.frag.glsl");
+	GLuint instancedModelShader = compileShaders("../OpenGL3-3/shaders/newModel/imodel.vert.glsl", "../OpenGL3-3/shaders/newModel/model.frag.glsl");
 	// Setup MVP model
 	glm::mat4 model, view, proj;
 	view = cam.GetViewMatrix();
@@ -108,7 +109,7 @@ int main()
 	glVertexAttribDivisor(2, 1);
 	glBindVertexArray(0);
 
-	const int amount = 1000;
+	const int amount = 10;
 	glm::mat4 modelMats[amount];
 	srand(glfwGetTime());
 	GLfloat radius = 50.0f;
@@ -129,6 +130,32 @@ int main()
 		GLfloat rotAngle = (rand() % 360);
 		model = glm::rotate(model, rotAngle, glm::vec3(0.4f, 0.6f, 0.8f));
 		modelMats[i] = model;
+	}
+
+
+	for (GLuint i = 0; i < asteroid.meshes.size(); i++)
+	{
+		GLuint VAO = asteroid.meshes[i].VAO;
+		GLuint buffer;
+		glBindVertexArray(VAO);
+		glGenBuffers(1, &buffer);
+		glBindBuffer(GL_ARRAY_BUFFER, buffer);
+		glBufferData(GL_ARRAY_BUFFER, amount * sizeof(glm::mat4), &modelMats[0], GL_STATIC_DRAW);
+		GLsizei vec4Size = sizeof(glm::vec4);
+		glEnableVertexAttribArray(3);
+		glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (GLvoid*)0);
+		glEnableVertexAttribArray(4);
+		glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (GLvoid*)(vec4Size));
+		glEnableVertexAttribArray(5);
+		glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (GLvoid*)(2 * vec4Size));
+		glEnableVertexAttribArray(6);
+		glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (GLvoid*)(3 * vec4Size));
+
+		glVertexAttribDivisor(3, 1);
+		glVertexAttribDivisor(4, 1);
+		glVertexAttribDivisor(5, 1);
+		glVertexAttribDivisor(6, 1);
+		glBindVertexArray(0);
 	}
 
 	glUseProgram(modelShader);
@@ -155,12 +182,14 @@ int main()
 		glUniformMatrix4fv(glGetUniformLocation(modelShader, "model"), 1, GL_FALSE, glm::value_ptr(model));
 		planet.draw(modelShader);
 
-		for (int i = 0; i < amount; i++)
+		glUseProgram(instancedModelShader);
+		glBindTexture(GL_TEXTURE_2D, asteroid.textures_loaded[0].id);
+		for (GLuint i = 0; i < asteroid.meshes.size(); i++)
 		{
-			glUniformMatrix4fv(glGetUniformLocation(modelShader, "model"), 1, GL_FALSE, glm::value_ptr(modelMats[i]));
-			asteroid.draw(modelShader);
+			glBindVertexArray(asteroid.meshes[i].VAO);
+			glDrawElementsInstanced(GL_TRIANGLES, asteroid.meshes[i].vertices.size(), GL_UNSIGNED_INT, 0, amount);
+			glBindVertexArray(0);
 		}
-
 		glfwSwapBuffers(window);
 
 	}

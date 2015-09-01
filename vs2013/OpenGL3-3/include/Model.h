@@ -23,9 +23,9 @@ public:
 	}
 	Model(GLchar* path);
 	void draw(GLuint program);
-private:
-	std::vector<Texture> textures_loaded;
 	std::vector<Mesh> meshes;
+	std::vector<Texture> textures_loaded;
+private:
 	std::string directory;
 	void loadModel(std::string path);
 	void processNode(aiNode* node, const aiScene* scene);
