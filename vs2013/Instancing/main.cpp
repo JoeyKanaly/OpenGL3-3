@@ -109,11 +109,14 @@ int main()
 	glVertexAttribDivisor(2, 1);
 	glBindVertexArray(0);
 
-	const int amount = 10;
-	glm::mat4 modelMats[amount];
+	std::cout << sizeof(glm::mat4) << std::endl;
+
+	const int amount = 100000;
+	glm::mat4* modelMats;
+	modelMats = new glm::mat4[amount];
 	srand(glfwGetTime());
-	GLfloat radius = 50.0f;
-	offset = 2.5f;
+	GLfloat radius = 150.0f;
+	offset = 25.0f;
 	for (GLuint i = 0; i < amount; i++)
 	{
 		glm::mat4 model;
@@ -160,6 +163,8 @@ int main()
 
 	glUseProgram(modelShader);
 	glUniformMatrix4fv(glGetUniformLocation(modelShader, "projection"), 1, GL_FALSE, glm::value_ptr(proj));
+	glUseProgram(instancedModelShader);
+	glUniformMatrix4fv(glGetUniformLocation(instancedModelShader, "projection"), 1, GL_FALSE, glm::value_ptr(proj));
 
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	while (!glfwWindowShouldClose(window))
@@ -173,8 +178,11 @@ int main()
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		handleMovement(window, deltaTime);
 
+		glUseProgram(instancedModelShader);
+		glUniformMatrix4fv(glGetUniformLocation(instancedModelShader, "view"), 1, GL_FALSE, glm::value_ptr(cam.GetViewMatrix()));
 		glUseProgram(modelShader);
 		glUniformMatrix4fv(glGetUniformLocation(modelShader, "view"), 1, GL_FALSE, glm::value_ptr(cam.GetViewMatrix()));
+
 
 		glm::mat4 model;
 		model = glm::translate(model, glm::vec3(0.0f, -5.0f, 0.0f));
@@ -241,7 +249,7 @@ void scroll(GLFWwindow* window, double xOff, double yOff)
 void enableSettings()
 {
 	glEnable(GL_DEPTH_TEST);
-	//glEnable(GL_CULL_FACE);
+	glEnable(GL_CULL_FACE);
 	//glEnable(GL_STENCIL_TEST);
 	//glEnable(GL_BLEND);
 	//glEnable(GL_PROGRAM_POINT_SIZE);
@@ -298,7 +306,7 @@ GLFWwindow* initWindow()
 Camera initCamera()
 {
 	Camera cam = Camera(glm::vec3(0.0f, 0.0f, 55.0f));
-	//cam.MovementSpeed = 100.0f;
+	cam.MovementSpeed = 100.0f;
 	return cam;
 }
 
