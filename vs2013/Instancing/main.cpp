@@ -40,23 +40,27 @@ int main()
 	currentFrame = 0.0f;
 
 	// Setup the viewport;
-	GLfloat width = 800, height = 600;
-	glViewport(0, 0, width, height);
+	GLfloat screenWidth = 800, screenHeight = 600;
+	glViewport(0, 0, screenWidth, screenHeight);
 
 	// Setup Camera
 	Camera cam = initCamera();
 	glfwSetWindowUserPointer(window, &cam);
 
+	// Load Models
 	Model planet = Model("./Models/planet/planet.obj");
 	Model asteroid = Model("./Models/rock/rock.obj");
 
+	// Load and Compile Shaders
 	GLuint program = compileShaders("../OpenGL3-3/shaders/advanced/instance/basic.vert.glsl", "../OpenGL3-3/shaders/advanced/instance/basic.frag.glsl");
 	GLuint modelShader = compileShaders("../OpenGL3-3/shaders/newModel/model.vert.glsl", "../OpenGL3-3/shaders/newModel/model.frag.glsl");
 	GLuint instancedModelShader = compileShaders("../OpenGL3-3/shaders/newModel/imodel.vert.glsl", "../OpenGL3-3/shaders/newModel/model.frag.glsl");
+	GLuint frameBufferShader = compileShaders("../OpenGL3-3/shaders/advanced/fbo.vert.glsl", "../OpenGL3-3/shaders/advanced/fbo.frag.glsl");
+
 	// Setup MVP model
 	glm::mat4 model, view, proj;
 	view = cam.GetViewMatrix();
-	proj = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 10000.0f);
+	proj = glm::perspective(glm::radians(45.0f), (float)screenWidth / (float)screenHeight, 0.1f, 1000.0f);
 
 #pragma region quad
 
@@ -85,6 +89,17 @@ int main()
 		}
 	}
 
+	GLfloat fboQuad[] = 
+	{
+		-1.0f, 1.0f, 0.0f, 1.0f,
+		-1.0f, -1.0f, 0.0f, 0.0f,
+		1.0f, -1.0f, 1.0f, 0.0f,
+
+		1.0f, -1.0f, 1.0f, 0.0f,
+		1.0f, 1.0f, 1.0f, 1.0f,
+		-1.0f, 1.0f, 0.0f, 1.0f
+	};
+
 #pragma endregion
 
 	GLuint VBO, VAO, instanceVBO;
@@ -95,18 +110,60 @@ int main()
 	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * 100, &translations[0], GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	glBindVertexArray(VAO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
+	// Create the Framebuffer
+	GLuint FBO;
+	glGenFramebuffers(1, &FBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+
+	GLuint texture;
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 800, 600, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
+	
+	GLuint RBO;
+	glGenRenderbuffers(1, &RBO);
+	glBindRenderbuffer(GL_RENDERBUFFER, RBO);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 800, 600);
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, RBO);
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		std::cout << "FRAMEBUFFER INCOMPLETE!" << std::endl;
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	GLuint fboVAO, fboVBO;
+	glGenVertexArrays(1, &fboVAO);
+	glGenBuffers(1, &fboVBO);
+	glBindVertexArray(fboVAO);
+	
+	glBindBuffer(GL_ARRAY_BUFFER, fboVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(fboQuad), fboQuad, GL_STATIC_DRAW);
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 5, (GLvoid*)0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (GLvoid*)0);
 	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 5, (GLvoid*)(sizeof(GLfloat) * 2));
-	glEnableVertexAttribArray(2);
-	glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), (GLvoid*)0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glVertexAttribDivisor(2, 1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (GLvoid*)(2*sizeof(GLfloat)));
+
+	glBindVertexArray(0);
+
+	glBindVertexArray(VAO);
+	{
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 5, (GLvoid*)0);
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 5, (GLvoid*)(sizeof(GLfloat) * 2));
+		glEnableVertexAttribArray(2);
+		glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), (GLvoid*)0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glVertexAttribDivisor(2, 1);
+	}
 	glBindVertexArray(0);
 
 	std::cout << sizeof(glm::mat4) << std::endl;
@@ -173,9 +230,10 @@ int main()
 		currentFrame = glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
-
+		glBindFramebuffer(GL_FRAMEBUFFER, FBO);
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glEnable(GL_DEPTH_TEST);
 		handleMovement(window, deltaTime);
 
 		glUseProgram(instancedModelShader);
@@ -198,14 +256,26 @@ int main()
 			glDrawElementsInstanced(GL_TRIANGLES, asteroid.meshes[i].vertices.size(), GL_UNSIGNED_INT, 0, amount);
 			glBindVertexArray(0);
 		}
+		glBindTexture(GL_TEXTURE_2D, 0);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
+		glDisable(GL_DEPTH_TEST);
+		
+		glUseProgram(frameBufferShader);
+		glBindVertexArray(fboVAO);
+		glBindTexture(GL_TEXTURE_2D, texture);
+		//glUniform1i(glGetUniformLocation(frameBufferShader, "myTexture"), 0);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+		glBindTexture(GL_TEXTURE_2D, 0);
 		glfwSwapBuffers(window);
 
 	}
 	glfwTerminate();
 	return 0;
 }
-
-
 
 void keyboard(GLFWwindow* window, int key, int scancode, int action, int mode)
 {
@@ -249,7 +319,8 @@ void scroll(GLFWwindow* window, double xOff, double yOff)
 void enableSettings()
 {
 	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_CULL_FACE);
+	//glEnable(GL_CULL_FACE);
+	glEnable(GL_MULTISAMPLE);
 	//glEnable(GL_STENCIL_TEST);
 	//glEnable(GL_BLEND);
 	//glEnable(GL_PROGRAM_POINT_SIZE);
@@ -265,6 +336,7 @@ GLFWwindow* initWindow()
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+	glfwWindowHint(GLFW_SAMPLES, 16);
 
 
 	//Create the window

@@ -53,8 +53,7 @@ void main()
 		col += sampleTex[i] * kernel[i];
 
 	color = vec4(col, 1.0f);
-
-	//color = texture(myTexture, texCoords);
 	//float average = (color.r + color.g + color.b) / 3.0f;
 	//color = vec4(average, average, average, 1.0f);
+	color = texture(myTexture, texCoords);
 }
