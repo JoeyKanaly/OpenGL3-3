@@ -13,6 +13,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Advanced", "Advanced\Advanc
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Instancing", "Instancing\Instancing.vcxproj", "{BBCF8A2A-CFD1-4B2D-8A17-8C5F88AD604D}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Advanced Lighting", "Advanced Lighting\Advanced Lighting.vcxproj", "{95C93C36-8EBE-4999-84CC-A3D72AAECDFC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -40,6 +42,10 @@ Global
 		{BBCF8A2A-CFD1-4B2D-8A17-8C5F88AD604D}.Debug|Win32.Build.0 = Debug|Win32
 		{BBCF8A2A-CFD1-4B2D-8A17-8C5F88AD604D}.Release|Win32.ActiveCfg = Release|Win32
 		{BBCF8A2A-CFD1-4B2D-8A17-8C5F88AD604D}.Release|Win32.Build.0 = Release|Win32
+		{95C93C36-8EBE-4999-84CC-A3D72AAECDFC}.Debug|Win32.ActiveCfg = Debug|Win32
+		{95C93C36-8EBE-4999-84CC-A3D72AAECDFC}.Debug|Win32.Build.0 = Debug|Win32
+		{95C93C36-8EBE-4999-84CC-A3D72AAECDFC}.Release|Win32.ActiveCfg = Release|Win32
+		{95C93C36-8EBE-4999-84CC-A3D72AAECDFC}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
