@@ -31,33 +31,22 @@ int main()
 	int width = 800, height = 600;
 	glViewport(0, 0, width, height);
 
+	double currentTime, previousTime, deltaTime;
+	currentTime = 0;
+	previousTime = 0;
+	deltaTime = 0;
+
 #pragma region planeVerts
 
 	GLfloat plane[] = 
 	{
-		-1.0f, 0.0f, -1.0f,
-		-1.0f, 0.0f, 1.0f,
-		1.0f, 0.0f, 1.0f,
+		-1.0f, 0.0f, -1.0f, 0.0f, 1.0f,
+		-1.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+		1.0f, 0.0f, 1.0f, 1.0f, 0.0f,
 
-		1.0f, 0.0f, 1.0f,
-		1.0f, 0.0f, -1.0f,
-		-1.0f, 0.0f, -1.0f
-	};
-
-	GLfloat quad[] =
-	{
-		-1.0f, 1.0f, 0.0f,
-		-1.0f, -1.0f, 0.0f, 
-		1.0f, -1.0f, 0.0f,
-
-		1.0f, -1.0f, 0.0f,
-		1.0f, 1.0f, 0.0f,
-		-1.0f, 1.0f, 0.0f
-	};
-	GLfloat vertices[] = {
-		-0.5f, -0.5f, 0.0f,
-		0.5f, -0.5f, 0.0f,
-		0.0f, 0.5f, 0.0f
+		1.0f, 0.0f, 1.0f, 1.0f, 0.0f,
+		1.0f, 0.0f, -1.0f, 1.0f, 1.0f,
+		-1.0f, 0.0f, -1.0f, 0.0f, 1.0f
 	};
 
 #pragma endregion
@@ -70,22 +59,41 @@ int main()
 	glGenBuffers(1, &VBO);
 	glBindVertexArray(VAO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(plane), plane, GL_STATIC_DRAW);
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat),(GLvoid*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat),(GLvoid*)0);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(2 * sizeof(GLfloat)));
 	glBindVertexArray(0);
 
 	GLuint program = compileShaders("../OpenGL3-3/shaders/lighting/advanced/basic.vert.glsl", "../OpenGL3-3/shaders/lighting/advanced/basic.frag.glsl");
 
+	GLuint texture = loadTexture("../OpenGL3-3/images/wall.jpg");
+
+	glm::mat4 proj = glm::perspective(glm::radians(45.0f), (float)(width / height), 0.1f, 100.0f);
+	glUseProgram(program);
+	glUniformMatrix4fv(glGetUniformLocation(program, "projection"), 1, GL_FALSE, glm::value_ptr(proj));
+	glUseProgram(0);
+
 	while (!glfwWindowShouldClose(window))
 	{
+		currentTime = glfwGetTime();
+		deltaTime = currentTime - previousTime;
+		previousTime = currentTime;
 		glfwPollEvents();
+		handleMovement(window, deltaTime);
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		glUseProgram(program);
+		glBindTexture(GL_TEXTURE_2D, texture);
+		glUniformMatrix4fv(glGetUniformLocation(program, "view"), 1, GL_FALSE, glm::value_ptr(cam.GetViewMatrix()));
+		glm::mat4 model;
+		model = glm::scale(model, glm::vec3(10.0f));
+		glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+
 		glBindVertexArray(VAO);
-			glDrawArrays(GL_TRIANGLES, 0, 3);
+			glDrawArrays(GL_TRIANGLES, 0, 6);
 		glBindVertexArray(0);
 
 
@@ -132,7 +140,7 @@ void enableSettings()
 {
 	glEnable(GL_DEPTH_TEST);
 	//glEnable(GL_CULL_FACE);
-	glEnable(GL_MULTISAMPLE);
+	//glEnable(GL_MULTISAMPLE);
 	//glEnable(GL_STENCIL_TEST);
 	//glEnable(GL_BLEND);
 	//glEnable(GL_PROGRAM_POINT_SIZE);
@@ -189,8 +197,8 @@ GLFWwindow* initWindow()
 
 Camera initCamera()
 {
-	Camera cam = Camera(glm::vec3(0.0f, 0.0f, 55.0f));
-	cam.MovementSpeed = 100.0f;
+	Camera cam = Camera(glm::vec3(0.0f, 10.0f, 0.0f));
+	cam.MovementSpeed = 10.0f;
 	return cam;
 }
 
