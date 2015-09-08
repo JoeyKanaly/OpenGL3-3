@@ -70,6 +70,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\OpenGL3-3\include\Mesh.cpp" />
+    <ClCompile Include="..\OpenGL3-3\include\Model.cpp" />
+    <ClCompile Include="..\OpenGL3-3\include\Tools.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
