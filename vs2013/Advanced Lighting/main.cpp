@@ -19,6 +19,8 @@ GLFWwindow* initWindow();
 Camera initCamera();
 void handleMovement(GLFWwindow* window, GLfloat deltaTime);
 
+bool blinn = true;
+
 int main()
 {
 	GLFWwindow* window = initWindow();
@@ -67,13 +69,15 @@ int main()
 	glBindVertexArray(0);
 
 	GLuint program = compileShaders("../OpenGL3-3/shaders/lighting/advanced/basic.vert.glsl", "../OpenGL3-3/shaders/lighting/advanced/basic.frag.glsl");
-
+	GLuint shaders = compileShaders("../OpenGL3-3/shaders/lighting/advanced/blinnPhong.vert.glsl", "../OpenGL3-3/shaders/lighting/advanced/blinnPhong.frag.glsl");
 	GLuint texture = loadTexture("../OpenGL3-3/images/wall.jpg");
 
 	glm::mat4 proj = glm::perspective(glm::radians(45.0f), (float)(width / height), 0.1f, 100.0f);
 	glUseProgram(program);
 	glUniformMatrix4fv(glGetUniformLocation(program, "projection"), 1, GL_FALSE, glm::value_ptr(proj));
 	glUseProgram(0);
+
+	glm::vec3 lightPos(0.0f, 0.0f, 0.0f);
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -85,12 +89,15 @@ int main()
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		glUseProgram(program);
+		glUseProgram(shaders);
 		glBindTexture(GL_TEXTURE_2D, texture);
-		glUniformMatrix4fv(glGetUniformLocation(program, "view"), 1, GL_FALSE, glm::value_ptr(cam.GetViewMatrix()));
+		glUniformMatrix4fv(glGetUniformLocation(shaders, "view"), 1, GL_FALSE, glm::value_ptr(cam.GetViewMatrix()));
 		glm::mat4 model;
 		model = glm::scale(model, glm::vec3(10.0f));
-		glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+		glUniformMatrix4fv(glGetUniformLocation(shaders, "model"), 1, GL_FALSE, glm::value_ptr(model));
+		glUniform3fv(glGetUniformLocation(shaders, "lightPos"), 1, &lightPos[0]);
+		glUniform3fv(glGetUniformLocation(shaders, "viewPos"), 1, &cam.Position[0]);
+		glUniform1i(glGetUniformLocation(shaders, "blinn"), blinn);
 
 		glBindVertexArray(VAO);
 			glDrawArrays(GL_TRIANGLES, 0, 6);
