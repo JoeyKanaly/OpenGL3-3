@@ -73,7 +73,11 @@
     <ClCompile Include="..\OpenGL3-3\include\Mesh.cpp" />
     <ClCompile Include="..\OpenGL3-3\include\Model.cpp" />
     <ClCompile Include="..\OpenGL3-3\include\Tools.cpp" />
+    <ClCompile Include="Light.cpp" />
     <ClCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Light.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
