@@ -17,7 +17,7 @@ out VS_OUT
 
 void main()
 {
-	gl_Position = projection * view * model * vec4(position, 1.0f);
+	gl_Position = projection * view * vec4(position, 1.0f);
 	vs_out.FragPos = position;
 	vs_out.Normal = normal;
 	vs_out.TexCoords = vec2(texCoords.x, 1 - texCoords.y);
